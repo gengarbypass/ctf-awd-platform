@@ -22,3 +22,4 @@ mock-targets/
 .DS_Store
 *.tsbuildinfo
 *.bundle
+*.bundle
