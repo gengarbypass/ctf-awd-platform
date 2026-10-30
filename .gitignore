@@ -20,3 +20,4 @@ __pycache__/
 .workbuddy/
 mock-targets/
 .DS_Store
+*.tsbuildinfo
