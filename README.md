@@ -13,6 +13,9 @@ sudo bash ctf-awd-platform/deploy.sh
 
 部署后请在阿里云安全组放行：TCP 443（平台）、TCP 80（跳转）、TCP 22（限管理员 IP）、实际使用的比赛端口段（默认队伍靶机 20000—21599）。
 
+> 若服务器访问 GitHub 受限，可在本地打包后上传：`git bundle create ctf-awd.bundle --all`，上传到服务器后
+> `git clone ctf-awd.bundle ctf-awd-platform && sudo bash ctf-awd-platform/deploy.sh`，部署流程完全一致。
+
 详细操作见 `docs/选手使用说明.md` 与 `docs/管理员操作手册.md`。
 
 ## 架构速览
