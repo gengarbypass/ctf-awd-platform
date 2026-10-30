@@ -1,0 +1,19 @@
+[Unit]
+Description=AWD SSH WebSocket terminal proxy
+After=network-online.target postgresql.service redis.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=awd
+Group=awd
+WorkingDirectory=/opt/awd-platform/backend
+EnvironmentFile=/opt/awd-platform/backend/.env
+ExecStart=/opt/awd-platform/backend/.venv/bin/uvicorn app.terminal_server:terminal_app --host 127.0.0.1 --port 8001
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

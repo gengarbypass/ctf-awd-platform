@@ -1,0 +1,22 @@
+# 环境与密钥
+.env
+.env.*
+!.env.example
+deploy/.env
+deploy/certs/
+
+# 依赖与构建
+node_modules/
+frontend/dist/
+*.pyc
+__pycache__/
+.venv/
+.pytest_cache/
+
+# 本地数据与临时文件
+*.db
+*.log
+.hallmark/
+.workbuddy/
+mock-targets/
+.DS_Store

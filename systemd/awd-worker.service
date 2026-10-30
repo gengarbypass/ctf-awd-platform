@@ -1,0 +1,19 @@
+[Unit]
+Description=AWD Flag and health worker
+After=network-online.target postgresql.service redis.service awd-api.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=awd
+Group=awd
+WorkingDirectory=/opt/awd-platform/backend
+EnvironmentFile=/opt/awd-platform/backend/.env
+ExecStart=/opt/awd-platform/backend/.venv/bin/python -m app.worker
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

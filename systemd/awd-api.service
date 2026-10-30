@@ -1,0 +1,19 @@
+[Unit]
+Description=AWD FastAPI service
+After=network-online.target postgresql.service redis.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=awd
+Group=awd
+WorkingDirectory=/opt/awd-platform/backend
+EnvironmentFile=/opt/awd-platform/backend/.env
+ExecStart=/opt/awd-platform/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

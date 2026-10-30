@@ -1,0 +1,12 @@
+[Unit]
+Description=AWD PostgreSQL backup
+
+[Service]
+Type=oneshot
+User=awd
+Group=awd
+WorkingDirectory=/opt/awd-platform
+EnvironmentFile=/opt/awd-platform/backend/.env
+ExecStart=/opt/awd-platform/scripts/backup.sh
+NoNewPrivileges=true
+PrivateTmp=true

@@ -1,0 +1,119 @@
+name: tarc-awd
+
+x-backend-env: &backend-env
+  ENVIRONMENT: ${ENVIRONMENT:-production}
+  DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-awd}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-awd}
+  REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+  SESSION_SECRET: ${SESSION_SECRET}
+  FLAG_HMAC_SECRET: ${FLAG_HMAC_SECRET}
+  SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}
+  ALLOW_IN_MEMORY_REDIS: "false"
+  ALLOW_MOCK_DOCKER: "false"
+  MATCH_ROUND_SECONDS: ${MATCH_ROUND_SECONDS:-300}
+  FLAG_GRACE_SECONDS: ${FLAG_GRACE_SECONDS:-30}
+  INITIAL_TEAM_SCORE: ${INITIAL_TEAM_SCORE:-1000}
+  ATTACK_REWARD: ${ATTACK_REWARD:-100}
+  VICTIM_PENALTY: ${VICTIM_PENALTY:-50}
+  HEALTH_INTERVAL_SECONDS: ${HEALTH_INTERVAL_SECONDS:-30}
+  MAX_AUTO_RESTARTS: ${MAX_AUTO_RESTARTS:-2}
+  TERMINAL_SSH_USERNAME: ${TERMINAL_SSH_USERNAME:-player}
+  TERMINAL_SSH_PASSWORD: ${TERMINAL_SSH_PASSWORD}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-awd}
+      POSTGRES_USER: ${POSTGRES_USER:-awd}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - /data/awd/postgres:/var/lib/postgresql/data
+    networks: [platform]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-awd} -d ${POSTGRES_DB:-awd}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    volumes:
+      - /data/awd/redis:/data
+    networks: [platform]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$REDIS_PASSWORD\" ping | grep PONG"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build: ../backend
+    restart: unless-stopped
+    command: sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    environment:
+      <<: *backend-env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /data/awd/targets:/data/awd/targets
+    networks: [platform, attack]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  worker:
+    build: ../backend
+    restart: unless-stopped
+    command: python -m app.worker
+    environment:
+      <<: *backend-env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /data/awd/targets:/data/awd/targets
+    networks: [platform, attack]
+    depends_on:
+      api: { condition: service_healthy }
+
+  terminal:
+    build: ../backend
+    restart: unless-stopped
+    command: uvicorn app.terminal_server:terminal_app --host 0.0.0.0 --port 8001
+    environment:
+      <<: *backend-env
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks: [platform, attack]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./certs:/etc/nginx/certs:ro
+    networks: [platform]
+    depends_on:
+      api: { condition: service_healthy }
+
+networks:
+  platform:
+    driver: bridge
+    internal: false
+  attack:
+    driver: bridge
+    internal: false

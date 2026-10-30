@@ -1,0 +1,11 @@
+[Unit]
+Description=Run AWD database backup every five minutes
+
+[Timer]
+OnBootSec=5min
+OnCalendar=*:0/5
+Persistent=true
+Unit=awd-backup.service
+
+[Install]
+WantedBy=timers.target
