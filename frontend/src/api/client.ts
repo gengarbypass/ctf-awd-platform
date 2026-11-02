@@ -67,6 +67,7 @@ export const api = {
   adminUsers: () => request<User[]>('/admin/users', {}, () => demo.users()),
   createUser: (payload: UserPayload) => request<User>('/admin/users', json('POST', payload), () => demo.createUser(payload)),
   updateUser: (id: string, payload: Partial<User> & { password?: string }) => request<User>(`/admin/users/${id}`, json('PUT', payload), () => demo.updateUser(id, payload)),
+  deleteUser: (id: string) => request<null>(`/admin/users/${id}`, { method: 'DELETE' }, () => demo.deleteUser(id)),
   matchAction: (action: 'start' | 'pause' | 'resume' | 'finish', body: Record<string, never> = {}) => request<Match>(`/admin/match/${action}`, json('POST', body), () => demo.matchAction(action)),
   readyMatch: () => request<Match>('/admin/match/ready', json('POST', {}), () => demo.matchAction('ready')),
   createMatch: (payload: Pick<Match, 'name' | 'starts_at' | 'ends_at' | 'round_seconds' | 'grace_seconds'>) => request<Match>('/admin/matches', json('POST', payload), () => demo.createMatch(payload)),

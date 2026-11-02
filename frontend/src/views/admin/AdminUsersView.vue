@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { Plus, RefreshCw } from '@lucide/vue'
+import { Plus, RefreshCw, Trash2 } from '@lucide/vue'
 import { api } from '@/api/client'
 import type { Role, User } from '@/api/types'
 import { useAsyncData } from '@/composables/useAsyncData'
@@ -38,6 +38,17 @@ async function resetPassword(user: User) {
     await api.updateUser(user.id, { password: value }); actionMessage.value = `${user.username} 的密码已重置。`
   } catch (cause) { if (cause !== 'cancel' && cause !== 'close') actionError.value = cause instanceof Error ? cause.message : '密码重置失败。' }
 }
+async function removeUser(user: User) {
+  actionError.value = ''
+  try {
+    await ElMessageBox.confirm(`确认删除选手「${user.username}」？删除后账号不可恢复；已有提交记录的选手不能删除，请改用禁用。`, '删除选手', { type: 'warning', confirmButtonText: '确认删除', cancelButtonText: '取消' })
+    await api.deleteUser(user.id)
+    actionMessage.value = `选手 ${user.username} 已删除。`
+    await load()
+  } catch (cause) {
+    if (cause !== 'cancel' && cause !== 'close') actionError.value = cause instanceof Error ? cause.message : '删除失败，请重试。'
+  }
+}
 onMounted(load)
 </script>
 
@@ -47,6 +58,6 @@ onMounted(load)
   </PageHeader>
   <p v-if="actionError" class="inline-error" role="alert">{{ actionError }}</p><p v-if="actionMessage" class="inline-success" role="status">{{ actionMessage }}</p>
   <div class="table-toolbar"><label for="user-search">搜索账号</label><input id="user-search" v-model="query" class="input toolbar-input" type="search" placeholder="用户名或队伍" /></div>
-  <DataState :loading="loading" :loaded="loaded" :error="error" :empty="!rows.length" empty-text="没有匹配的账号。" @retry="load"><div class="table-scroll" tabindex="0" role="region" aria-label="用户列表，窄屏可横向滚动"><table v-responsive-table class="data-table"><thead><tr><th>用户名</th><th>角色</th><th>所属队伍</th><th>状态</th><th>最近登录</th><th class="action-cell">操作</th></tr></thead><tbody><tr v-for="user in rows" :key="user.id"><td><strong>{{ user.username }}</strong></td><td>{{ user.role === 'ADMIN' ? '管理员' : '选手' }}</td><td>{{ user.team_name || '不加入队伍' }}</td><td><StatusTag :label="user.status === 'ACTIVE' ? '正常' : '已禁用'" :tone="user.status === 'ACTIVE' ? 'success' : 'neutral'" /></td><td>{{ formatDate(user.last_login_at) }}</td><td class="action-cell"><div class="table-actions"><button class="button button--text" type="button" @click="openEdit(user)">编辑</button><button class="button button--text" type="button" @click="resetPassword(user)">重置密码</button></div></td></tr></tbody></table></div></DataState>
+  <DataState :loading="loading" :loaded="loaded" :error="error" :empty="!rows.length" empty-text="没有匹配的账号。" @retry="load"><div class="table-scroll" tabindex="0" role="region" aria-label="用户列表，窄屏可横向滚动"><table v-responsive-table class="data-table"><thead><tr><th>用户名</th><th>角色</th><th>所属队伍</th><th>状态</th><th>最近登录</th><th class="action-cell">操作</th></tr></thead><tbody><tr v-for="user in rows" :key="user.id"><td><strong>{{ user.username }}</strong></td><td>{{ user.role === 'ADMIN' ? '管理员' : '选手' }}</td><td>{{ user.team_name || '不加入队伍' }}</td><td><StatusTag :label="user.status === 'ACTIVE' ? '正常' : '已禁用'" :tone="user.status === 'ACTIVE' ? 'success' : 'neutral'" /></td><td>{{ formatDate(user.last_login_at) }}</td><td class="action-cell"><div class="table-actions"><button class="button button--text" type="button" @click="openEdit(user)">编辑</button><button class="button button--text" type="button" @click="resetPassword(user)">重置密码</button><button v-if="user.role === 'PLAYER'" class="button button--text" type="button" @click="removeUser(user)"><Trash2 :size="15" aria-hidden="true" />删除</button></div></td></tr></tbody></table></div></DataState>
   <el-dialog v-model="dialogOpen" :title="editingId ? '编辑账号' : '新建账号'" width="min(520px, 92vw)"><form class="dialog-form" @submit.prevent="save"><div class="form-field"><label for="account-name">用户名</label><input id="account-name" v-model="form.username" class="input" type="text" autocomplete="off" :disabled="!!editingId" required /></div><div class="form-field"><label for="account-password">{{ editingId ? '新密码（留空则不修改）' : '初始密码' }}</label><input id="account-password" v-model="form.password" class="input" type="password" autocomplete="new-password" :required="!editingId" /></div><div class="form-grid"><div class="form-field"><label for="account-role">角色</label><select id="account-role" v-model="form.role" class="input"><option value="PLAYER">选手</option><option value="ADMIN">管理员</option></select></div><div class="form-field"><label for="account-status">状态</label><select id="account-status" v-model="form.status" class="input"><option value="ACTIVE">正常</option><option value="DISABLED">禁用</option></select></div></div><div v-if="form.role === 'PLAYER'" class="form-field"><label for="account-team">所属队伍</label><select id="account-team" v-model="form.team_id" class="input" required><option :value="null" disabled>请选择队伍</option><option v-for="team in data.teams" :key="team.id" :value="team.id" :disabled="team.member_count >= 4 && team.id !== form.team_id">{{ team.name }}（{{ team.member_count }} / 4）</option></select></div><div class="dialog-actions"><button class="button button--secondary" type="button" @click="dialogOpen = false">取消</button><button class="button button--primary" type="submit" :disabled="saving">{{ saving ? '保存中' : '保存账号' }}</button></div></form></el-dialog>
 </template>

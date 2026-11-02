@@ -300,6 +300,19 @@ export const demo = {
     user.team_name = teams.find(item => item.id === user.team_id)?.name ?? null
     audit('USER_UPDATE', 'user', id, '更新账号、队伍或状态'); return clone(user)
   },
+  async deleteUser(id: string) {
+    await wait(); requireAdmin()
+    const index = users.findIndex(item => item.id === id)
+    if (index < 0) throw new Error('未找到该选手。')
+    const user = users[index]
+    if (user.role !== 'PLAYER') throw new Error('只能删除选手账号。')
+    const team = teams.find(item => item.id === user.team_id)
+    if (team) team.member_count = Math.max(0, team.member_count - 1)
+    users.splice(index, 1)
+    passwords.delete(user.username)
+    audit('USER_DELETE', 'user', id, `删除选手 ${user.username}`)
+    return null
+  },
   async matchAction(action: 'ready' | 'start' | 'pause' | 'resume' | 'finish' | 'freeze') {
     await wait(); requireAdmin()
     if (action === 'ready') match.status = 'READY'

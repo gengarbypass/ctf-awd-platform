@@ -63,3 +63,24 @@ async def test_registration_enforces_team_capacity(client):
     response = await http.post("/api/v1/auth/register", json={"username": "fifth", "password": "Player123!", "invite_code": "INVITE-1"})
     assert response.status_code == 409
     assert response.json()["code"] == "TEAM_FULL"
+
+
+@pytest.mark.asyncio
+async def test_admin_can_delete_player_without_submissions(client):
+    http, db = client
+    _, _, _, users = await make_game(db)
+    admin = User(username="admin", password_hash=hash_password("Admin123!"), role=Role.ADMIN)
+    db.add(admin)
+    victim = users[0]
+    db.add(AuditLog(actor_id=victim.id, action="test.before_delete", object_type="user", object_id=victim.id))
+    await db.commit()
+    await login(http, "admin", "Admin123!")
+
+    response = await http.delete(f"/api/v1/admin/users/{victim.id}")
+    assert response.status_code == 200
+    assert await db.scalar(select(func.count(User.id)).where(User.id == victim.id)) == 0
+    before = (await db.execute(select(AuditLog).where(AuditLog.action == "test.before_delete"))).scalar_one()
+    assert before.actor_id is None
+    deleted = (await db.execute(select(AuditLog).where(AuditLog.action == "user.delete"))).scalar_one()
+    assert deleted.object_id == victim.id
+    assert deleted.actor_id == admin.id

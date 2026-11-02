@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, select
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -204,6 +204,26 @@ async def update_user(user_id: str, payload: UserUpdate, request: Request, actor
     await audit(db, actor.id, "user.update", "user", user.id, {"role": user.role.value, "team_id": user.team_id, "status": user.status.value, "password_reset": bool(payload.password)}, request)
     await db.commit()
     return success({"id": user.id, "username": user.username, "role": user.role.value, "team_id": user.team_id, "status": user.status.value})
+
+
+@router.delete("/users/{user_id}")
+async def delete_user(user_id: str, request: Request, actor: User = Depends(_actor), db: AsyncSession = Depends(get_db)):
+    user = await db.get(User, user_id)
+    if not user:
+        raise APIError(404, "NOT_FOUND", "user not found")
+    if user.id == actor.id:
+        raise APIError(409, "SELF_DELETE_FORBIDDEN", "不能删除当前登录账号")
+    if user.role != Role.PLAYER:
+        raise APIError(409, "ADMIN_DELETE_FORBIDDEN", "只能删除选手账号")
+    has_submission = await db.scalar(select(Submission.id).where(Submission.user_id == user.id).limit(1))
+    if has_submission:
+        raise APIError(409, "USER_HAS_SUBMISSIONS", "该选手已有提交记录，不能删除；请改为禁用账号")
+    # 保留历史审计记录，但解除即将删除账号的外键引用。
+    await db.execute(update(AuditLog).where(AuditLog.actor_id == user.id).values(actor_id=None))
+    await audit(db, actor.id, "user.delete", "user", user.id, {"username": user.username, "team_id": user.team_id}, request)
+    await db.delete(user)
+    await db.commit()
+    return success(message="user deleted")
 
 
 @router.get("/matches")
