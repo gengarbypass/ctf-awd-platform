@@ -162,6 +162,26 @@ export const demo = {
     await wait(); const user = requireUser()
     return clone(targets.filter(target => target.team_id === user.team_id))
   },
+  async opponentTargets() {
+    await wait(); const user = requireUser()
+    if (!user.team_id) return []
+    return clone(targets
+      .filter(target => target.team_id !== user.team_id)
+      .sort((a, b) => (a.team_no ?? 0) - (b.team_no ?? 0) || a.service_id.localeCompare(b.service_id))
+      .map(target => ({
+        id: target.id,
+        team_id: target.team_id,
+        team_no: target.team_no ?? 0,
+        team_name: target.team_name ?? '未知队伍',
+        service_id: target.service_id,
+        service_code: target.service_code,
+        service_name: target.service_name,
+        protocol: target.protocol,
+        public_port: target.public_port,
+        status: target.status,
+        last_checked_at: target.last_checked_at,
+      })))
+  },
   async submissionsMine() {
     await wait(); const user = requireUser()
     return clone(submissions.filter(item => item.attacker_team_id === user.team_id))

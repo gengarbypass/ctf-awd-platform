@@ -8,7 +8,7 @@ import json
 
 from ..database import get_db
 from ..dependencies import get_current_user, require_player
-from ..models import Announcement, AnnouncementStatus, Flag, Submission, Target, User
+from ..models import Announcement, AnnouncementStatus, Flag, Submission, Target, Team, TeamStatus, User
 from ..responses import success
 from ..serializers import announcement_dict, match_dict, submission_dict, target_dict, user_dict
 from ..services.ranking import current_match, scoreboard_snapshot
@@ -44,6 +44,36 @@ async def targets_mine(user: User = Depends(require_player), db: AsyncSession = 
         Target.team_id == user.team_id
     ))).scalars().all()
     return success([target_dict(target) for target in targets])
+
+
+@router.get("/targets/opponents")
+async def targets_opponents(user: User = Depends(require_player), db: AsyncSession = Depends(get_db)):
+    """公开比赛入口：只暴露队伍、服务和公网端口，不暴露容器或管理网信息。"""
+    if not user.team_id:
+        return success([])
+    targets = (await db.execute(
+        select(Target)
+        .options(selectinload(Target.team), selectinload(Target.service))
+        .join(Team, Team.id == Target.team_id)
+        .where(Target.team_id != user.team_id, Team.status == TeamStatus.ACTIVE)
+    )).scalars().all()
+    targets.sort(key=lambda item: (item.team.team_no, item.service.service_no))
+    return success([
+        {
+            "id": target.id,
+            "team_id": target.team_id,
+            "team_no": target.team.team_no,
+            "team_name": target.team.name,
+            "service_id": target.service_id,
+            "service_code": target.service.code,
+            "service_name": target.service.name,
+            "protocol": target.service.protocol,
+            "public_port": target.public_port,
+            "status": target.status.value,
+            "last_checked_at": target.last_health_at.isoformat() if target.last_health_at else None,
+        }
+        for target in targets
+    ])
 
 
 @router.get("/submissions/mine")

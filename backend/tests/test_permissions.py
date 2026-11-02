@@ -66,6 +66,26 @@ async def test_registration_enforces_team_capacity(client):
 
 
 @pytest.mark.asyncio
+async def test_player_sees_only_opponent_public_targets(client):
+    http, db = client
+    _, round_, teams, _ = await make_game(db, team_count=3)
+    _, own_target, _ = await add_flag(db, round_, teams[0], "flag{own-team}")
+    _, opponent_target, _ = await add_flag(db, round_, teams[1], "flag{opponent-team}")
+    await login(http)
+
+    response = await http.get("/api/v1/targets/opponents")
+    assert response.status_code == 200
+    items = response.json()["data"]
+    assert [item["id"] for item in items] == [opponent_target.id]
+    assert items[0]["team_id"] == teams[1].id
+    assert items[0]["public_port"] == opponent_target.public_port
+    assert "attack_ip" not in items[0]
+    assert "container_name" not in items[0]
+    assert "gateway_host" not in items[0]
+    assert own_target.id != items[0]["id"]
+
+
+@pytest.mark.asyncio
 async def test_admin_can_delete_player_without_submissions(client):
     http, db = client
     _, _, _, users = await make_game(db)

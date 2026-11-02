@@ -2,7 +2,7 @@ import { demo } from './demo'
 import type {
   AdminOverview, Announcement, AnnouncementPayload, ApiResponse, AuditLog, FlagResult,
   LoginPayload, Match, RegisterPayload, Scoreboard, ScoreLedger, Service, ServicePayload,
-  Submission, Target, Team, TeamPayload, User, UserPayload, HealthCheck,
+  Submission, Target, Team, TeamPayload, User, UserPayload, HealthCheck, OpponentTarget,
 } from './types'
 
 export const isDemo = import.meta.env.DEV && import.meta.env.VITE_USE_DEMO !== 'false'
@@ -55,6 +55,7 @@ export const api = {
   match: () => request<Match | null>('/match/current', {}, () => demo.match()).then(normalizeMatch),
   scoreboard: () => request<Scoreboard>('/scoreboard', {}, () => demo.scoreboard()),
   targetsMine: () => request<Target[]>('/targets/mine', {}, () => demo.targetsMine()),
+  opponentTargets: () => request<OpponentTarget[]>('/targets/opponents', {}, () => demo.opponentTargets()),
   submissionsMine: () => request<Submission[]>('/submissions/mine', {}, () => demo.submissionsMine()),
   announcements: () => request<Announcement[]>('/announcements', {}, () => demo.announcements()),
   submitFlag: (flag: string, requestId: string) => request<FlagResult>('/flags/submit', json('POST', { flag, request_id: requestId }), () => demo.submitFlag(flag)),

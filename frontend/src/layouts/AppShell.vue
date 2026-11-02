@@ -19,6 +19,7 @@ const playerNav = [
   { to: '/dashboard', label: '训练首页', icon: Gauge },
   { to: '/scoreboard', label: '实时计分板', icon: Trophy },
   { to: '/targets', label: '我的靶机', icon: MonitorCog },
+  { to: '/targets/opponents', label: '攻击目标', icon: Swords },
   { to: '/submissions', label: '提交记录', icon: ClipboardList },
   { to: '/announcements', label: '公告', icon: Bell },
 ]

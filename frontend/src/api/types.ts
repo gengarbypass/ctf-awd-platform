@@ -87,6 +87,20 @@ export interface Target {
   error?: string | null
 }
 
+export interface OpponentTarget {
+  id: string
+  team_id: string
+  team_no: number
+  team_name: string
+  service_id: string
+  service_code: string
+  service_name: string
+  protocol: string
+  public_port: number
+  status: TargetStatus
+  last_checked_at: string | null
+}
+
 export interface Submission {
   id: string
   request_id: string
