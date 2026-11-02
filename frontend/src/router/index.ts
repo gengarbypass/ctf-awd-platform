@@ -9,6 +9,7 @@ const router = createRouter({
     { path: '/', redirect: '/dashboard' },
     { path: '/dashboard', component: () => import('@/views/DashboardView.vue'), meta: { title: '训练首页', role: 'PLAYER' } },
     { path: '/scoreboard', component: () => import('@/views/ScoreboardView.vue'), meta: { title: '实时计分板' } },
+    { path: '/screen', component: () => import('@/views/BigScreenView.vue'), meta: { title: '计分大屏', bare: true } },
     { path: '/targets', component: () => import('@/views/TargetsView.vue'), meta: { title: '我的靶机', role: 'PLAYER' } },
     { path: '/submissions', component: () => import('@/views/SubmissionsView.vue'), meta: { title: '提交记录', role: 'PLAYER' } },
     { path: '/announcements', component: () => import('@/views/AnnouncementsView.vue'), meta: { title: '公告' } },

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { LockKeyhole, RefreshCw, Search } from '@lucide/vue'
+import { LockKeyhole, Maximize2, RefreshCw, Search } from '@lucide/vue'
 import { api, createEventSource } from '@/api/client'
 import { useAsyncData } from '@/composables/useAsyncData'
 import { formatDate } from '@/utils/format'
@@ -19,7 +19,7 @@ onBeforeUnmount(() => disconnect?.())
 
 <template>
   <PageHeader title="实时计分板" description="有效攻击计分后，最迟 5 秒更新；服务健康不额外加减分。">
-    <template #actions><button class="button button--secondary" type="button" :disabled="loading" @click="load"><RefreshCw :size="16" aria-hidden="true" />刷新快照</button></template>
+    <template #actions><RouterLink class="button button--secondary" to="/screen"><Maximize2 :size="16" aria-hidden="true" />大屏模式</RouterLink><button class="button button--secondary" type="button" :disabled="loading" @click="load"><RefreshCw :size="16" aria-hidden="true" />刷新快照</button></template>
   </PageHeader>
   <div v-if="data.frozen" class="inline-banner inline-banner--warning"><LockKeyhole :size="18" aria-hidden="true" /><div><strong>计分板已冻结</strong><p>当前展示冻结时刻快照，后台仍正常验判并保存计分流水。</p></div></div>
   <div class="board-toolbar"><div class="search-field"><Search :size="16" aria-hidden="true" /><input v-model="query" class="input" type="search" aria-label="搜索队伍" placeholder="搜索队名或编号" /></div><div class="board-meta"><span :class="connected ? 'text-success' : 'text-warning'">{{ connected ? '实时连接正常' : '正在重新连接' }}</span><span>快照 {{ formatDate(data.generated_at, true) }}</span><span>版本 {{ data.version }}</span></div></div>

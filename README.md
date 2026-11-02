@@ -24,11 +24,13 @@ sudo bash ctf-awd-platform/deploy.sh
 
 ## 架构速览
 
-- 前端：Vue 3 + TypeScript + Element Plus（`frontend/`），SSE 实时计分、xterm.js Web 终端
+- 前端：Vue 3 + TypeScript + Element Plus（`frontend/`），SSE 实时计分、xterm.js Web 终端、`/screen` 动态计分大屏
 - 后端：FastAPI + SQLAlchemy 2 + Alembic（`backend/`），HttpOnly Cookie 会话、事务化计分
 - Worker：Flag 轮换（Redis 分布式锁）、健康检查、受控自动恢复
 - 终端代理：WebSocket → 本队 SSH 管理网关（`app/terminal_server.py`）
 - 基础设施：PostgreSQL 16 / Redis 7 / Nginx（`deploy/docker-compose.yml`）
+
+> 计分大屏预览：[1920×1080](docs/bigscreen-preview.png) · [1366×768](docs/bigscreen-preview-1366.png)。登录后打开 `/screen`，或从 `/scoreboard` 点击「大屏模式」。
 
 ## 核心规则
 
