@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import StreamingResponse
-from sqlalchemy import func, select, update
+from sqlalchemy import delete, func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -419,14 +419,49 @@ async def update_service(
 
 
 @router.delete("/services/{service_id}")
-async def delete_service(service_id: str, request: Request, actor: User = Depends(_actor), db: AsyncSession = Depends(get_db)):
+async def delete_service(
+    service_id: str,
+    request: Request,
+    force: bool = Query(False),
+    actor: User = Depends(_actor),
+    db: AsyncSession = Depends(get_db),
+):
     service = await db.get(Service, service_id)
     if not service:
         raise APIError(404, "NOT_FOUND", "service not found")
-    if await db.scalar(select(Target.id).where(Target.service_id == service_id).limit(1)):
-        raise APIError(409, "SERVICE_IN_USE", "service already has target instances")
+    targets = list((await db.execute(select(Target).where(Target.service_id == service_id))).scalars())
+    if targets and not force:
+        raise APIError(
+            409,
+            "SERVICE_IN_USE",
+            f"service has {len(targets)} target instance(s); delete targets first or retry with force",
+        )
+    for target in targets:
+        try:
+            await request.app.state.target_adapter.destroy(target)
+        except Exception as exc:
+            await audit(
+                db,
+                actor.id,
+                "service.delete_cleanup_failed",
+                "service",
+                service_id,
+                {"target_id": target.id, "error": str(exc)[:500]},
+                request,
+            )
+            await db.commit()
+            raise APIError(502, "TARGET_CLEANUP_FAILED", f"target cleanup failed: {str(exc)[:300]}") from exc
+    if targets:
+        target_ids = [target.id for target in targets]
+        flag_ids = list((await db.execute(select(Flag.id).where(Flag.target_id.in_(target_ids)))).scalars())
+        if flag_ids:
+            # 保留历史提交记录，只解除已删除 Flag 的外键引用。
+            await db.execute(update(Submission).where(Submission.flag_id.in_(flag_ids)).values(flag_id=None))
+            await db.execute(delete(Flag).where(Flag.id.in_(flag_ids)))
+        await db.execute(delete(HealthCheck).where(HealthCheck.target_id.in_(target_ids)))
+        await db.execute(delete(Target).where(Target.id.in_(target_ids)))
     await db.delete(service)
-    await audit(db, actor.id, "service.delete", "service", service_id, {"code": service.code}, request)
+    await audit(db, actor.id, "service.delete", "service", service_id, {"code": service.code, "target_count": len(targets)}, request)
     await db.commit()
     return success(message="service deleted")
 

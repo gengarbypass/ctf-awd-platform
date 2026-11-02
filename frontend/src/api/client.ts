@@ -78,7 +78,7 @@ export const api = {
   adminServices: () => request<Service[]>('/admin/services', {}, () => demo.services()),
   createService: (payload: ServicePayload) => request<Service>('/admin/services', json('POST', payload), () => demo.createService(payload)),
   updateService: (id: string, payload: Partial<ServicePayload>) => request<Service>(`/admin/services/${id}`, json('PUT', payload), () => demo.updateService(id, payload)),
-  deleteService: (id: string) => request<null>(`/admin/services/${id}`, json('DELETE'), () => demo.deleteService(id)),
+  deleteService: (id: string, force = false) => request<null>(`/admin/services/${id}${force ? '?force=true' : ''}`, { method: 'DELETE' }, () => demo.deleteService(id, force)),
   pullServiceImage: (id: string) => request<{ image: string }>(`/admin/services/${id}/pull-image`, json('POST', {}), () => demo.pullServiceImage(id)),
   startTarget: (id: string) => request<Target>(`/admin/targets/${id}/start`, json('POST', {}), () => demo.changeTargetState(id, 'start')),
   stopTarget: (id: string) => request<Target>(`/admin/targets/${id}/stop`, json('POST', {}), () => demo.changeTargetState(id, 'stop')),

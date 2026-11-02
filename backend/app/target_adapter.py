@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import os
+import shutil
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,6 +41,9 @@ class TargetAdapter(ABC):
 
     @abstractmethod
     async def pull_image(self, image: str) -> None: ...
+
+    @abstractmethod
+    async def destroy(self, target: Target) -> None: ...
 
 
 class MockTargetAdapter(TargetAdapter):
@@ -89,6 +93,12 @@ class MockTargetAdapter(TargetAdapter):
 
     async def pull_image(self, image: str) -> None:
         return None
+
+    async def destroy(self, target) -> None:
+        self._running.discard(target.id)
+        volume = (self.root / target.volume_name).resolve()
+        if volume != self.root and self.root in volume.parents:
+            shutil.rmtree(volume, ignore_errors=True)
 
 
 class DockerTargetAdapter(TargetAdapter):
@@ -205,6 +215,21 @@ class DockerTargetAdapter(TargetAdapter):
     async def restart(self, target) -> None:
         container = await asyncio.to_thread(self._container, target.container_name)
         await asyncio.to_thread(container.restart, 10)
+
+    async def destroy(self, target) -> None:
+        await asyncio.to_thread(self._destroy_target, target)
+
+    def _destroy_target(self, target) -> None:
+        try:
+            container = self._docker.containers.get(target.container_name)
+            container.remove(force=True, v=False)
+        except self._not_found:
+            pass
+        try:
+            volume = self._docker.volumes.get(target.volume_name)
+            volume.remove(force=True)
+        except self._not_found:
+            pass
 
     async def inject_flag(self, target, service, plaintext_flag) -> None:
         container = await asyncio.to_thread(self._container, target.container_name)

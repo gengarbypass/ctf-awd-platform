@@ -389,9 +389,14 @@ export const demo = {
     audit('SERVICE_UPDATE', 'service', id, `更新服务模板 ${service.name}`)
     return clone(service)
   },
-  async deleteService(id: string) {
+  async deleteService(id: string, force = false) {
     await wait(); requireAdmin()
-    if (targets.some(item => item.service_id === id)) throw new Error('该服务已有靶机实例，不能删除。')
+    const serviceTargets = targets.filter(item => item.service_id === id)
+    if (serviceTargets.length && !force) throw new Error(`该服务有 ${serviceTargets.length} 个靶机实例，请确认强制删除。`)
+    for (const target of serviceTargets) {
+      const targetIndex = targets.findIndex(item => item.id === target.id)
+      if (targetIndex >= 0) targets.splice(targetIndex, 1)
+    }
     const index = serviceCatalog.findIndex(item => item.id === id)
     if (index < 0) throw new Error('未找到该服务模板。')
     const [service] = serviceCatalog.splice(index, 1)

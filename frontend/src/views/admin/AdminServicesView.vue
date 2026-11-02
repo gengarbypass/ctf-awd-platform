@@ -125,15 +125,15 @@ async function pullImage(service: Service) {
 
 async function remove(service: Service) {
   try {
-    await ElMessageBox.confirm(`删除服务模板 ${service.name}（${service.code}）？已有靶机实例的模板不能删除。`, '删除服务模板', { type: 'warning', confirmButtonText: '确认删除', cancelButtonText: '取消' })
+    await ElMessageBox.confirm(`删除服务模板 ${service.name}（${service.code}）？如果已有靶机实例，将同时销毁这些靶机的容器和数据卷，操作不可恢复。`, '强制删除服务模板', { type: 'warning', confirmButtonText: '一并删除', cancelButtonText: '取消' })
   } catch {
     return
   }
   actionError.value = ''
   busy.value = service.id
   try {
-    await api.deleteService(service.id)
-    actionMessage.value = '服务模板已删除。'
+    await api.deleteService(service.id, true)
+    actionMessage.value = '服务模板及其靶机实例已删除。'
     await load()
   } catch (cause) {
     actionError.value = cause instanceof Error ? cause.message : '删除失败。'
@@ -146,7 +146,7 @@ onMounted(load)
 </script>
 
 <template>
-  <PageHeader title="服务模板" description="每队每种服务只创建一个靶机实例；代码和编号创建后不可修改，镜像必须能从服务器拉取。">
+  <PageHeader title="服务模板" description="每队每种服务只创建一个靶机实例；删除模板会同时销毁其全部靶机。代码和编号创建后不可修改，镜像必须能从服务器拉取。">
     <template #actions>
       <button class="button button--secondary" type="button" :disabled="loading" @click="load"><RefreshCw :size="16" aria-hidden="true" />刷新</button>
       <button class="button button--primary" type="button" @click="openCreate"><Plus :size="16" aria-hidden="true" />新建模板</button>

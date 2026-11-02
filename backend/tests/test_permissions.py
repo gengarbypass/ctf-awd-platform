@@ -1,7 +1,7 @@
 import pytest
 from sqlalchemy import func, select
 
-from app.models import AuditLog, Role, Target, Team, User
+from app.models import AuditLog, Role, Service, Target, Team, User
 from app.security import hash_password
 from conftest import add_flag, make_game
 
@@ -84,3 +84,45 @@ async def test_admin_can_delete_player_without_submissions(client):
     deleted = (await db.execute(select(AuditLog).where(AuditLog.action == "user.delete"))).scalar_one()
     assert deleted.object_id == victim.id
     assert deleted.actor_id == admin.id
+
+
+@pytest.mark.asyncio
+async def test_admin_can_force_delete_service_with_targets(client):
+    http, db = client
+    _, _, teams, _ = await make_game(db, team_count=1)
+    service = Service(
+        code="cleanup",
+        name="Cleanup",
+        service_no=9,
+        protocol="TCP",
+        internal_port=8080,
+        public_base_port=21000,
+        flag_path="/data/flag",
+        image="cleanup:test",
+    )
+    db.add(service)
+    await db.flush()
+    target = Target(
+        team_id=teams[0].id,
+        service_id=service.id,
+        container_name="cleanup-target",
+        attack_ip="172.31.1.99",
+        public_port=29999,
+        volume_name="cleanup-target-data",
+        gateway_host="gateway-t01",
+        gateway_port=2222,
+    )
+    db.add(target)
+    admin = User(username="admin", password_hash=hash_password("Admin123!"), role=Role.ADMIN)
+    db.add(admin)
+    await db.commit()
+    await login(http, "admin", "Admin123!")
+
+    refused = await http.delete(f"/api/v1/admin/services/{service.id}")
+    assert refused.status_code == 409
+    assert refused.json()["code"] == "SERVICE_IN_USE"
+
+    response = await http.delete(f"/api/v1/admin/services/{service.id}?force=true")
+    assert response.status_code == 200
+    assert await db.scalar(select(func.count(Service.id)).where(Service.id == service.id)) == 0
+    assert await db.scalar(select(func.count(Target.id)).where(Target.id == target.id)) == 0
