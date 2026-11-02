@@ -28,12 +28,12 @@ const nodes = computed(() => {
     <svg class="radar-svg" viewBox="0 0 320 320" aria-hidden="true">
       <defs>
         <radialGradient id="radar-core" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stop-color="#62f4ff" stop-opacity="0.18" />
-          <stop offset="100%" stop-color="#0b1830" stop-opacity="0" />
+          <stop offset="0%" stop-color="#1f63d6" stop-opacity="0.1" />
+          <stop offset="100%" stop-color="#eef5ff" stop-opacity="0" />
         </radialGradient>
         <linearGradient id="radar-sweep-fill" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stop-color="#7ff8ff" stop-opacity="0.16" />
-          <stop offset="100%" stop-color="#7ff8ff" stop-opacity="0" />
+          <stop offset="0%" stop-color="#1f63d6" stop-opacity="0.14" />
+          <stop offset="100%" stop-color="#1f63d6" stop-opacity="0" />
         </linearGradient>
       </defs>
 
@@ -73,19 +73,19 @@ const nodes = computed(() => {
 <style scoped>
 .radar-wrap { display: flex; flex: 1; align-items: center; justify-content: center; min-height: 0; padding: 2px 0 0; }
 .radar-svg { display: block; width: 100%; height: 100%; max-height: 100%; overflow: visible; }
-.radar-ring { fill: none; stroke: rgba(84, 213, 255, 0.15); stroke-width: 0.8; }
-.radar-axis { stroke: rgba(75, 195, 255, 0.12); stroke-width: 0.7; }
+.radar-ring { fill: none; stroke: rgba(31, 99, 214, 0.15); stroke-width: 0.8; }
+.radar-axis { stroke: rgba(31, 99, 214, 0.12); stroke-width: 0.7; }
 .radar-axis--faint { stroke-dasharray: 2 5; opacity: 0.6; }
 .radar-sweep { transform-origin: 160px 160px; animation: radar-sweep 7s linear infinite; }
-.radar-sweep-line { stroke: rgba(102, 242, 255, 0.55); stroke-width: 1; filter: drop-shadow(0 0 4px rgba(83, 236, 255, 0.55)); }
-.radar-link { stroke: rgba(83, 210, 255, 0.2); stroke-width: 0.8; stroke-dasharray: 2 4; }
-.radar-node-halo { fill: rgba(85, 226, 255, 0.07); stroke: rgba(83, 225, 255, 0.16); stroke-width: 0.7; }
-.radar-node-dot { fill: #63ecff; filter: drop-shadow(0 0 5px rgba(94, 240, 255, 0.9)); }
-.radar-node--top .radar-node-dot { fill: #ffd166; filter: drop-shadow(0 0 7px rgba(255, 205, 95, 0.95)); }
-.radar-node--top .radar-node-halo { fill: rgba(255, 207, 92, 0.1); stroke: rgba(255, 208, 98, 0.35); }
-.radar-label { fill: #79dff2; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 8px; letter-spacing: 0.06em; }
-.radar-node--top .radar-label { fill: #ffe6a0; }
-.radar-core-dot { fill: #d4ffff; filter: drop-shadow(0 0 7px rgba(125, 248, 255, 0.9)); }
+.radar-sweep-line { stroke: rgba(31, 99, 214, 0.55); stroke-width: 1; filter: drop-shadow(0 0 4px rgba(31, 99, 214, 0.28)); }
+.radar-link { stroke: rgba(31, 99, 214, 0.2); stroke-width: 0.8; stroke-dasharray: 2 4; }
+.radar-node-halo { fill: rgba(31, 99, 214, 0.07); stroke: rgba(31, 99, 214, 0.16); stroke-width: 0.7; }
+.radar-node-dot { fill: #1f63d6; filter: drop-shadow(0 0 5px rgba(31, 99, 214, 0.5)); }
+.radar-node--top .radar-node-dot { fill: #0b2a5b; filter: drop-shadow(0 0 7px rgba(11, 42, 91, 0.55)); }
+.radar-node--top .radar-node-halo { fill: rgba(11, 42, 91, 0.08); stroke: rgba(11, 42, 91, 0.35); }
+.radar-label { fill: #315b8f; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 8px; letter-spacing: 0.06em; }
+.radar-node--top .radar-label { fill: #0b2a5b; }
+.radar-core-dot { fill: #1f63d6; filter: drop-shadow(0 0 7px rgba(31, 99, 214, 0.5)); }
 @keyframes radar-sweep { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .radar-sweep { animation: none; } }
 </style>

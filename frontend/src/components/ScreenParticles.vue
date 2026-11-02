@@ -9,7 +9,7 @@ interface Particle {
   radius: number
   alpha: number
   phase: number
-  hue: 'cyan' | 'violet' | 'lime'
+  hue: 'blue' | 'azure' | 'navy'
 }
 
 const canvas = ref<HTMLCanvasElement | null>(null)
@@ -31,7 +31,7 @@ function randomParticle(): Particle {
     radius: 0.6 + Math.random() * 1.8,
     alpha: 0.25 + Math.random() * 0.65,
     phase: Math.random() * Math.PI * 2,
-    hue: hueRoll > 0.72 ? 'violet' : hueRoll > 0.58 ? 'lime' : 'cyan',
+    hue: hueRoll > 0.72 ? 'navy' : hueRoll > 0.58 ? 'azure' : 'blue',
   }
 }
 
@@ -56,7 +56,7 @@ function resize() {
 function drawFrame(time: number) {
   if (!context) return
   context.clearRect(0, 0, width, height)
-  context.globalCompositeOperation = 'lighter'
+  context.globalCompositeOperation = 'source-over'
 
   for (const particle of particles) {
     if (!reducedMotion) {
@@ -68,11 +68,11 @@ function drawFrame(time: number) {
       if (particle.y > height + 20) particle.y = -20
     }
     const flicker = 0.72 + Math.sin(time * 0.0012 + particle.phase) * 0.28
-    const color = particle.hue === 'violet'
-      ? `rgba(150, 100, 255, ${particle.alpha * flicker})`
-      : particle.hue === 'lime'
-        ? `rgba(160, 255, 130, ${particle.alpha * flicker * 0.7})`
-        : `rgba(76, 238, 255, ${particle.alpha * flicker})`
+    const color = particle.hue === 'navy'
+      ? `rgba(11, 42, 91, ${particle.alpha * flicker * 0.72})`
+      : particle.hue === 'azure'
+        ? `rgba(47, 128, 237, ${particle.alpha * flicker * 0.62})`
+        : `rgba(31, 99, 214, ${particle.alpha * flicker * 0.58})`
     context.beginPath()
     context.fillStyle = color
     context.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2)
@@ -88,7 +88,7 @@ function drawFrame(time: number) {
       const distance = Math.sqrt(dx * dx + dy * dy)
       if (distance > 150) continue
       context.beginPath()
-      context.strokeStyle = `rgba(70, 180, 255, ${(1 - distance / 150) * 0.08})`
+      context.strokeStyle = `rgba(31, 99, 214, ${(1 - distance / 150) * 0.12})`
       context.lineWidth = 0.7
       context.moveTo(first.x, first.y)
       context.lineTo(second.x, second.y)
