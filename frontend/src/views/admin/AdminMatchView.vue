@@ -14,7 +14,7 @@ import StatusTag from '@/components/StatusTag.vue'
 const { data, loading, loaded, error, load } = useAsyncData(api.match, null as Match | null)
 const shellMatch = useMatchStore()
 const config = reactive({ ends_at: '', round_seconds: 300, grace_seconds: 30 })
-const createForm = reactive({ name: '师市行内部对抗', starts_at: '', ends_at: '' })
+const createForm = reactive({ name: '网安师市行实战对抗', starts_at: '', ends_at: '' })
 const actionError = ref('')
 const actionMessage = ref('')
 const busy = ref('')

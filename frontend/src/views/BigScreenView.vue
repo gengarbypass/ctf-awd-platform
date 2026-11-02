@@ -23,6 +23,7 @@ interface FeedItem {
 }
 
 const scoreboard = ref<Scoreboard | null>(null)
+const screenTitle = '网安师市行实战对抗'
 const match = ref<Match | null>(null)
 const notices = ref<Announcement[]>([])
 const loading = ref(true)
@@ -286,7 +287,7 @@ onBeforeUnmount(() => {
 
     <header class="bs-header">
       <div class="brand-block">
-        <div class="brand-mark">TARC</div>
+        <img class="brand-mark brand-mark--logo" src="/taru-cyber-logo.png" alt="塔里木大学网络安全学院" />
         <div class="brand-copy"><strong>塔大网安 · 师市行</strong><span>AWD LIVE SCOREBOARD</span></div>
       </div>
 
@@ -296,7 +297,7 @@ onBeforeUnmount(() => {
           <span class="match-code">TARC // AWD // {{ match ? 'ONLINE' : 'STANDBY' }}</span>
           <span v-if="isDemo" class="demo-chip">DEMO</span>
         </div>
-        <h1>{{ match?.name || '等待比赛数据' }}</h1>
+        <h1>{{ screenTitle }}</h1>
         <div class="match-meta">
           <span>ROUND <b>{{ String(match?.current_round ?? 0).padStart(2, '0') }}</b></span>
           <span>{{ match?.round_seconds ?? 300 }}S ROTATION</span>
@@ -959,6 +960,7 @@ onBeforeUnmount(() => {
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(220, 238, 255, 0.8));
   box-shadow: inset 0 0 24px rgba(31, 99, 214, 0.08), 0 0 28px rgba(31, 99, 214, 0.08);
 }
+.brand-mark--logo { display: block; padding: 5px; border-radius: 50%; background: #ffffff; object-fit: contain; }
 .brand-copy span, .match-code { color: #5478a5; }
 .match-block h1 { color: var(--bs-ink); text-shadow: 0 0 24px rgba(31, 99, 214, 0.14); }
 .match-meta { color: #4f719b; }

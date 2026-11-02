@@ -35,7 +35,7 @@ const users: User[] = [
 ]
 
 const match: Match = {
-  id: 'match-demo', name: '2026 师市行秋季内部对抗', status: 'RUNNING',
+  id: 'match-demo', name: '网安师市行实战对抗', status: 'RUNNING',
   starts_at: minutesFromNow(-118), ends_at: minutesFromNow(122), server_time: now(),
   round_seconds: 300, grace_seconds: 30, current_round: 24, score_frozen: false,
 }
