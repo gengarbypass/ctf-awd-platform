@@ -24,6 +24,7 @@ x-backend-env: &backend-env
   TERMINAL_SSH_USERNAME: ${TERMINAL_SSH_USERNAME:-player}
   TERMINAL_SSH_PASSWORD: ${TERMINAL_SSH_PASSWORD}
   GATEWAY_IMAGE: ${GATEWAY_IMAGE:-linuxserver/openssh-server:latest}
+  GATEWAY_PORT: ${GATEWAY_PORT:-2222}
   LOG_LEVEL: ${LOG_LEVEL:-INFO}
 
 services:

@@ -114,6 +114,7 @@ else
   NPM_REGISTRY="${NPM_REGISTRY:-https://registry.npmmirror.com}"
   PIP_INDEX_URL="${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}"
   GATEWAY_IMAGE="${GATEWAY_IMAGE:-linuxserver/openssh-server:latest}"
+  GATEWAY_PORT="${GATEWAY_PORT:-2222}"
 
   POSTGRES_PASSWORD="$(generate_secret)"
   REDIS_PASSWORD="$(generate_secret)"
@@ -134,6 +135,7 @@ FLAG_HMAC_SECRET=$FLAG_HMAC_SECRET
 TERMINAL_SSH_USERNAME=player
 TERMINAL_SSH_PASSWORD=$TERMINAL_SSH_PASSWORD
 GATEWAY_IMAGE=$GATEWAY_IMAGE
+GATEWAY_PORT=$GATEWAY_PORT
 # 构建与拉取镜像时使用；大陆 ECS 建议填写阿里云镜像加速器
 DOCKER_REGISTRY_MIRROR=$DOCKER_REGISTRY_MIRROR
 NPM_REGISTRY=$NPM_REGISTRY
@@ -169,6 +171,7 @@ ensure_env_default DOCKER_REGISTRY_MIRROR "${DOCKER_REGISTRY_MIRROR:-}"
 ensure_env_default NPM_REGISTRY "${NPM_REGISTRY:-https://registry.npmmirror.com}"
 ensure_env_default PIP_INDEX_URL "${PIP_INDEX_URL:-https://mirrors.aliyun.com/pypi/simple/}"
 ensure_env_default GATEWAY_IMAGE "${GATEWAY_IMAGE:-linuxserver/openssh-server:latest}"
+ensure_env_default GATEWAY_PORT "${GATEWAY_PORT:-2222}"
 
 DOCKER_GID="$(stat -c '%g' /var/run/docker.sock 2>/dev/null || true)"
 if [[ -n "$DOCKER_GID" ]]; then
@@ -183,7 +186,7 @@ fi
 
 set -a; source "$ENV_FILE"; set +a
 : "${POSTGRES_PASSWORD:?}"; : "${REDIS_PASSWORD:?}"; : "${SESSION_SECRET:?}"; : "${FLAG_HMAC_SECRET:?}"; : "${TERMINAL_SSH_PASSWORD:?}"
-: "${TARC_PORT:=443}"; : "${TARC_DOMAIN:=}"; : "${DOCKER_REGISTRY_MIRROR:=}"; : "${GATEWAY_IMAGE:=linuxserver/openssh-server:latest}"
+: "${TARC_PORT:=443}"; : "${TARC_DOMAIN:=}"; : "${DOCKER_REGISTRY_MIRROR:=}"; : "${GATEWAY_IMAGE:=linuxserver/openssh-server:latest}"; : "${GATEWAY_PORT:=2222}"
 
 # ---------- 4. Docker 镜像加速 ----------
 configure_docker_mirror() {

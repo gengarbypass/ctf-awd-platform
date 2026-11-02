@@ -179,7 +179,7 @@ class Target(Base):
     public_port: Mapped[int] = mapped_column(Integer, unique=True, nullable=False)
     volume_name: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
     gateway_host: Mapped[str] = mapped_column(String(120), nullable=False)
-    gateway_port: Mapped[int] = mapped_column(Integer, default=22, nullable=False)
+    gateway_port: Mapped[int] = mapped_column(Integer, default=2222, nullable=False)
     status: Mapped[TargetStatus] = mapped_column(Enum(TargetStatus, native_enum=False), default=TargetStatus.CREATED, nullable=False)
     consecutive_failures: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     consecutive_successes: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

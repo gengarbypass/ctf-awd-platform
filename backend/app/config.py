@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     terminal_ssh_password: str = ""
     terminal_ssh_private_key: str = ""
     gateway_image: str = "linuxserver/openssh-server:latest"
+    gateway_port: int = 2222
     log_level: str = "INFO"
 
     @model_validator(mode="after")

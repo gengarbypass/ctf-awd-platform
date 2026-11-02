@@ -461,6 +461,7 @@ async def initialize_targets(payload: TargetInitializeRequest, request: Request,
                 public_port=20000 + team.team_no * 100 + service.service_no,
                 volume_name=f"awd-t{team.team_no:02d}-s{service.service_no:02d}-data",
                 gateway_host=f"gateway-t{team.team_no:02d}",
+                gateway_port=settings.gateway_port,
             )
             db.add(target)
             await db.flush()
