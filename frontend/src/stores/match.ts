@@ -19,7 +19,11 @@ export const useMatchStore = defineStore('match', () => {
     timer = window.setInterval(() => { clock.value = Date.now() }, 1000)
   }
   function stopClock() { if (timer) window.clearInterval(timer); timer = undefined }
-  const statusLabel = computed(() => match.value ? matchStatus[match.value.status].label : '状态未知')
+  const statusLabel = computed(() => {
+    if (!match.value) return '暂无比赛'
+    const state = matchStatus[match.value.status]
+    return state?.label ?? '状态未知'
+  })
   const remainingSeconds = computed(() => {
     if (!match.value || !['RUNNING', 'PAUSED'].includes(match.value.status)) return 0
     const reference = match.value.status === 'PAUSED' && match.value.paused_at ? new Date(match.value.paused_at).getTime() : clock.value

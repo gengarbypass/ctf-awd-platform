@@ -37,8 +37,8 @@ async function submit() {
 <template>
   <div class="login-layout">
     <section class="login-intro">
-      <div class="login-brand"><span class="brand__mark" aria-hidden="true">塔</span><span><strong>塔大网安</strong><small>师市行实战平台</small></span></div>
-      <div class="login-intro__body"><h1>授权内部 CTF-AWD 训练</h1><p>登录后提交 Flag、管理本队靶机并查看实时排名。</p></div>
+      <div class="login-brand"><img class="brand__mark brand__mark--avatar" src="/taru-cyber-logo.png" alt="塔里木大学网络安全学院" /><span><strong>塔大网安</strong><small>师市行实战平台</small></span></div>
+      <div class="login-intro__body"><h1>筑牢边疆数字防线、<br />锻造基层网安尖兵</h1><p>塔大网安师市行实战平台，登录后提交 Flag、管理本队靶机并查看实时排名。</p></div>
       <dl class="login-rules"><div><dt>Flag 轮换</dt><dd>300 秒</dd></div><div><dt>提交宽限</dt><dd>30 秒</dd></div><div><dt>有效攻击</dt><dd>+100 / -50</dd></div></dl>
       <p class="login-access"><ShieldCheck :size="17" aria-hidden="true" />平台仅用于授权训练，所有关键操作保留审计记录。</p>
     </section>

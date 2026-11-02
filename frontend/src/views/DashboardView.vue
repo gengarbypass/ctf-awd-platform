@@ -30,7 +30,7 @@ onMounted(load)
   <DataState :loading="loading" :loaded="loaded" :error="error" :empty="false" @retry="load">
     <div class="dashboard-command">
       <section class="score-plate" aria-labelledby="own-score-title">
-        <div class="score-plate__head"><div><h2 id="own-score-title">本队当前总分</h2><p>第 {{ ownRow?.rank || '待定' }} 名，共 {{ data.scoreboard.rows.length }} 支队伍</p></div><StatusTag :label="matchStore.statusLabel" :tone="matchStore.match ? matchStatus[matchStore.match.status].tone : 'neutral'" /></div>
+        <div class="score-plate__head"><div><h2 id="own-score-title">本队当前总分</h2><p>第 {{ ownRow?.rank || '待定' }} 名，共 {{ data.scoreboard.rows.length }} 支队伍</p></div><StatusTag :label="matchStore.statusLabel" :tone="matchStore.match ? (matchStatus[matchStore.match.status]?.tone ?? 'neutral') : 'neutral'" /></div>
         <strong class="score-plate__figure num">{{ ownRow?.current_score ?? '待计分' }}</strong>
         <dl class="score-plate__stats"><div><dt>有效攻击</dt><dd>{{ ownRow?.attack_count ?? 0 }}</dd></div><div><dt>被攻击</dt><dd>{{ ownRow?.breached_count ?? 0 }}</dd></div><div><dt>比赛剩余</dt><dd>{{ formatDuration(matchStore.remainingSeconds) }}</dd></div></dl>
       </section>

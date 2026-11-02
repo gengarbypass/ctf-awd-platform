@@ -42,12 +42,17 @@ async function request<T>(path: string, init: RequestInit = {}, demoCall: () => 
 
 const json = (method: string, body?: unknown): RequestInit => ({ method, body: body === undefined ? undefined : JSON.stringify(body) })
 
+function normalizeMatch(value: Match | null | undefined): Match | null {
+  if (!value || typeof value !== 'object') return null
+  return value.id && value.status ? value : null
+}
+
 export const api = {
   login: (payload: LoginPayload) => request<User>('/auth/login', json('POST', payload), () => demo.login(payload)),
   register: (payload: RegisterPayload) => request<User>('/auth/register', json('POST', payload), () => demo.register(payload)),
   logout: () => request<null>('/auth/logout', json('POST'), () => demo.logout()),
   me: () => request<User>('/users/me', {}, () => demo.me()),
-  match: () => request<Match>('/match/current', {}, () => demo.match()),
+  match: () => request<Match | null>('/match/current', {}, () => demo.match()).then(normalizeMatch),
   scoreboard: () => request<Scoreboard>('/scoreboard', {}, () => demo.scoreboard()),
   targetsMine: () => request<Target[]>('/targets/mine', {}, () => demo.targetsMine()),
   submissionsMine: () => request<Submission[]>('/submissions/mine', {}, () => demo.submissionsMine()),
@@ -55,7 +60,7 @@ export const api = {
   submitFlag: (flag: string, requestId: string) => request<FlagResult>('/flags/submit', json('POST', { flag, request_id: requestId }), () => demo.submitFlag(flag)),
   restartTarget: (id: string) => request<Target>(`/targets/${id}/restart`, json('POST'), () => demo.restartTarget(id)),
 
-  adminOverview: () => request<AdminOverview>('/admin/overview', {}, () => demo.overview()),
+  adminOverview: () => request<AdminOverview>('/admin/overview', {}, () => demo.overview()).then(data => ({ ...data, match: normalizeMatch(data.match) })),
   adminTeams: () => request<Team[]>('/admin/teams', {}, () => demo.teams()),
   createTeam: (payload: TeamPayload) => request<Team>('/admin/teams', json('POST', payload), () => demo.createTeam(payload)),
   updateTeam: (id: string, payload: Partial<Team> & { reset_score?: boolean }) => request<Team>(`/admin/teams/${id}`, json('PUT', payload), () => demo.updateTeam(id, payload)),

@@ -34,7 +34,7 @@ const adminNav = [
   { to: '/admin/audit', label: '审计日志', icon: ScrollText },
 ]
 const navItems = computed(() => auth.isAdmin ? adminNav : playerNav)
-const matchMeta = computed(() => matchStore.match ? matchStatus[matchStore.match.status] : null)
+const matchMeta = computed(() => { const status = matchStore.match ? matchStatus[matchStore.match.status] : null; return status ?? null })
 
 async function logout() { await auth.logout(); await router.replace('/login') }
 function closeOnEscape(event: KeyboardEvent) { if (event.key === 'Escape') mobileOpen.value = false }
@@ -56,7 +56,7 @@ onBeforeUnmount(() => { matchStore.stopClock(); window.removeEventListener('keyd
     <aside class="sidebar" :class="{ 'is-open': mobileOpen }" aria-label="主导航">
       <div class="brand">
         <RouterLink :to="auth.isAdmin ? '/admin' : '/dashboard'" class="brand__link" aria-label="塔大网安师市行首页" @click="mobileOpen = false">
-          <span class="brand__mark" aria-hidden="true">塔</span>
+          <img class="brand__mark brand__mark--avatar" src="/taru-cyber-logo.png" alt="塔里木大学网络安全学院" />
           <span><strong>塔大网安</strong><small>师市行实战平台</small></span>
         </RouterLink>
         <button class="icon-button sidebar-close" type="button" aria-label="关闭导航" @click="mobileOpen = false"><X :size="20" aria-hidden="true" /></button>
@@ -77,7 +77,7 @@ onBeforeUnmount(() => { matchStore.stopClock(); window.removeEventListener('keyd
         <div class="topbar__right">
           <div v-if="matchStore.match && matchMeta" class="match-clock"><StatusTag :label="matchMeta.label" :tone="matchMeta.tone" /><span class="num">{{ ['RUNNING', 'PAUSED'].includes(matchStore.match.status) ? formatDuration(matchStore.remainingSeconds) : '00:00:00' }}</span></div>
           <el-dropdown trigger="click">
-            <button class="user-menu" type="button"><span class="user-avatar" aria-hidden="true">{{ auth.user?.username.slice(0, 1).toUpperCase() }}</span><span class="user-copy"><strong>{{ auth.user?.username }}</strong><small>{{ auth.isAdmin ? '管理员' : auth.user?.team_name }}</small></span><ChevronDown :size="15" aria-hidden="true" /></button>
+            <button class="user-menu" type="button"><img class="user-avatar user-avatar--logo" src="/taru-cyber-logo.png" alt="" aria-hidden="true" /><span class="user-copy"><strong>{{ auth.user?.username }}</strong><small>{{ auth.isAdmin ? '管理员' : auth.user?.team_name }}</small></span><ChevronDown :size="15" aria-hidden="true" /></button>
             <template #dropdown><el-dropdown-menu><el-dropdown-item @click="logout"><LogOut :size="15" aria-hidden="true" />退出登录</el-dropdown-item></el-dropdown-menu></template>
           </el-dropdown>
         </div>
