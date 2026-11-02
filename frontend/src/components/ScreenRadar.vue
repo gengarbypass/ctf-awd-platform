@@ -83,7 +83,7 @@ const nodes = computed(() => {
 .radar-node-dot { fill: #1f63d6; filter: drop-shadow(0 0 5px rgba(31, 99, 214, 0.5)); }
 .radar-node--top .radar-node-dot { fill: #0b2a5b; filter: drop-shadow(0 0 7px rgba(11, 42, 91, 0.55)); }
 .radar-node--top .radar-node-halo { fill: rgba(11, 42, 91, 0.08); stroke: rgba(11, 42, 91, 0.35); }
-.radar-label { fill: #315b8f; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; letter-spacing: 0.06em; }
+.radar-label { fill: #315b8f; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; letter-spacing: 0.06em; }
 .radar-node--top .radar-label { fill: #0b2a5b; }
 .radar-core-dot { fill: #1f63d6; filter: drop-shadow(0 0 7px rgba(31, 99, 214, 0.5)); }
 @keyframes radar-sweep { to { transform: rotate(360deg); } }

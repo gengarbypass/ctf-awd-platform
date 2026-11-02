@@ -1090,7 +1090,7 @@ onBeforeUnmount(() => {
 .boot-retry { border-color: rgba(31, 99, 214, 0.32); color: #1f63d6; background: rgba(255, 255, 255, 0.8); }
 .boot-retry:hover { border-color: #1f63d6; }
 
-/* Small module labels: +2px for projection readability */
+/* Small module labels: +4px from original for projection readability */
 .brand-copy span,
 .match-code,
 .demo-chip,
@@ -1109,7 +1109,7 @@ onBeforeUnmount(() => {
 .notice-feature p,
 .notice-list strong,
 .ticker-label,
-.ticker-track { font-size: 11px; }
+.ticker-track { font-size: 13px; }
 .clock-block span,
 .ranking-head,
 .team-name span,
@@ -1118,17 +1118,17 @@ onBeforeUnmount(() => {
 .feed-time,
 .notice-level,
 .notice-top time,
-.footer-sync { font-size: 10px; }
+.footer-sync { font-size: 12px; }
 .pin-mark,
 .stat-card small,
-.notice-list span { font-size: 9px; }
+.notice-list span { font-size: 11px; }
 .match-meta,
 .combat-cell,
 .feed-copy strong,
 .notice-empty,
 .error-strip,
 .boot-overlay p,
-.boot-retry { font-size: 12px; }
+.boot-retry { font-size: 14px; }
 .ranking-empty,
-.notice-feature h3 { font-size: 13px; }
+.notice-feature h3 { font-size: 15px; }
 </style>
