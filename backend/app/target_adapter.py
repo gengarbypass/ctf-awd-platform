@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import httpx
+from docker.types import IPAMConfig, IPAMPool
 
 from .config import settings
 from .models import Service, Target
@@ -36,6 +37,9 @@ class TargetAdapter(ABC):
 
     @abstractmethod
     async def check_health(self, target: Target, service: Service) -> HealthResult: ...
+
+    @abstractmethod
+    async def pull_image(self, image: str) -> None: ...
 
 
 class MockTargetAdapter(TargetAdapter):
@@ -83,6 +87,9 @@ class MockTargetAdapter(TargetAdapter):
             return HealthResult(False, "mock target is stopped")
         return HealthResult(True)
 
+    async def pull_image(self, image: str) -> None:
+        return None
+
 
 class DockerTargetAdapter(TargetAdapter):
     def __init__(self):
@@ -95,6 +102,7 @@ class DockerTargetAdapter(TargetAdapter):
         await asyncio.to_thread(self._initialize_target, target, service, team_no)
 
     def _initialize_target(self, target, service, team_no) -> None:
+        self._ensure_image(service.image)
         try:
             self._docker.volumes.get(target.volume_name)
         except self._not_found:
@@ -126,12 +134,21 @@ class DockerTargetAdapter(TargetAdapter):
         )
         attack.connect(container, ipv4_address=target.attack_ip)
 
+    def _ensure_image(self, image: str) -> None:
+        try:
+            self._docker.images.get(image)
+        except self._not_found:
+            self._docker.images.pull(image)
+
+    async def pull_image(self, image: str) -> None:
+        await asyncio.to_thread(self._ensure_image, image)
+
     def _ensure_network(self, name: str, subnet: str):
         try:
             return self._docker.networks.get(name)
         except self._not_found:
-            pool = self._docker.types.IPAMPool(subnet=subnet)
-            config = self._docker.types.IPAMConfig(pool_configs=[pool])
+            pool = IPAMPool(subnet=subnet)
+            config = IPAMConfig(pool_configs=[pool])
             return self._docker.networks.create(name=name, driver="bridge", ipam=config, internal=False)
 
     def _connect_core_services(self, network, service_names: tuple[str, ...]) -> None:
@@ -151,8 +168,9 @@ class DockerTargetAdapter(TargetAdapter):
             return
         except self._not_found:
             pass
+        self._ensure_image(settings.gateway_image)
         self._docker.containers.create(
-            image="linuxserver/openssh-server:latest",
+            image=settings.gateway_image,
             name=name,
             detach=True,
             network=network,

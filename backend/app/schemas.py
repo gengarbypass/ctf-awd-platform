@@ -82,6 +82,16 @@ class ServiceCreate(BaseModel):
     check_config: dict[str, Any] = Field(default_factory=dict)
 
 
+class ServiceUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=100)
+    protocol: Literal["TCP", "HTTP"] | None = None
+    internal_port: int | None = Field(default=None, ge=1, le=65535)
+    public_base_port: int | None = Field(default=None, ge=1, le=65535)
+    flag_path: str | None = Field(default=None, min_length=1, max_length=255)
+    image: str | None = Field(default=None, min_length=1, max_length=255)
+    check_config: dict[str, Any] | None = None
+
+
 class TargetInitializeRequest(BaseModel):
     team_ids: list[str] | None = None
     service_ids: list[str] | None = None

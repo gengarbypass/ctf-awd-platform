@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     terminal_ssh_username: str = "player"
     terminal_ssh_password: str = ""
     terminal_ssh_private_key: str = ""
+    gateway_image: str = "linuxserver/openssh-server:latest"
     log_level: str = "INFO"
 
     @model_validator(mode="after")

@@ -16,6 +16,7 @@ const router = createRouter({
     { path: '/admin/teams', component: () => import('@/views/admin/AdminTeamsView.vue'), meta: { title: '队伍管理', role: 'ADMIN' } },
     { path: '/admin/users', component: () => import('@/views/admin/AdminUsersView.vue'), meta: { title: '选手管理', role: 'ADMIN' } },
     { path: '/admin/match', component: () => import('@/views/admin/AdminMatchView.vue'), meta: { title: '比赛控制', role: 'ADMIN' } },
+    { path: '/admin/services', component: () => import('@/views/admin/AdminServicesView.vue'), meta: { title: '服务模板', role: 'ADMIN' } },
     { path: '/admin/targets', component: () => import('@/views/admin/AdminTargetsView.vue'), meta: { title: '靶机管理', role: 'ADMIN' } },
     { path: '/admin/submissions', component: () => import('@/views/admin/AdminSubmissionsView.vue'), meta: { title: '提交与流水', role: 'ADMIN' } },
     { path: '/admin/announcements', component: () => import('@/views/admin/AdminAnnouncementsView.vue'), meta: { title: '公告管理', role: 'ADMIN' } },

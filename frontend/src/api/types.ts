@@ -153,8 +153,33 @@ export interface HealthCheck {
   checked_at: string
 }
 
+export interface Service {
+  id: string
+  code: string
+  name: string
+  service_no: number
+  protocol: 'TCP' | 'HTTP'
+  internal_port: number
+  public_base_port: number
+  flag_path: string
+  image: string
+  check_config: Record<string, unknown>
+}
+
+export interface ServicePayload {
+  code: string
+  name: string
+  service_no: number
+  protocol: 'TCP' | 'HTTP'
+  internal_port: number
+  public_base_port: number
+  flag_path: string
+  image: string
+  check_config: Record<string, unknown>
+}
+
 export interface AdminOverview {
-  match: Match
+  match: Match | null
   team_count: number
   online_team_count: number
   player_count: number

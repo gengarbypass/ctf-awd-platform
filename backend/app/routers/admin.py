@@ -45,6 +45,7 @@ from ..schemas import (
     MatchUpdate,
     ScoreAdjustRequest,
     ServiceCreate,
+    ServiceUpdate,
     TargetInitializeRequest,
     TeamCreate,
     TeamUpdate,
@@ -378,6 +379,54 @@ async def create_service(payload: ServiceCreate, request: Request, actor: User =
     return success(service_dict(service))
 
 
+@router.put("/services/{service_id}")
+async def update_service(
+    service_id: str,
+    payload: ServiceUpdate,
+    request: Request,
+    actor: User = Depends(_actor),
+    db: AsyncSession = Depends(get_db),
+):
+    service = await db.get(Service, service_id)
+    if not service:
+        raise APIError(404, "NOT_FOUND", "service not found")
+    changes = payload.model_dump(exclude_unset=True, exclude_none=True)
+    for key, value in changes.items():
+        setattr(service, key, value)
+    await audit(db, actor.id, "service.update", "service", service.id, changes, request)
+    await db.commit()
+    return success(service_dict(service))
+
+
+@router.delete("/services/{service_id}")
+async def delete_service(service_id: str, request: Request, actor: User = Depends(_actor), db: AsyncSession = Depends(get_db)):
+    service = await db.get(Service, service_id)
+    if not service:
+        raise APIError(404, "NOT_FOUND", "service not found")
+    if await db.scalar(select(Target.id).where(Target.service_id == service_id).limit(1)):
+        raise APIError(409, "SERVICE_IN_USE", "service already has target instances")
+    await db.delete(service)
+    await audit(db, actor.id, "service.delete", "service", service_id, {"code": service.code}, request)
+    await db.commit()
+    return success(message="service deleted")
+
+
+@router.post("/services/{service_id}/pull-image")
+async def pull_service_image(service_id: str, request: Request, actor: User = Depends(_actor), db: AsyncSession = Depends(get_db)):
+    service = await db.get(Service, service_id)
+    if not service:
+        raise APIError(404, "NOT_FOUND", "service not found")
+    try:
+        await request.app.state.target_adapter.pull_image(service.image)
+    except Exception as exc:
+        await audit(db, actor.id, "service.image_pull_failed", "service", service.id, {"image": service.image, "error": str(exc)[:500]}, request)
+        await db.commit()
+        raise APIError(502, "IMAGE_PULL_FAILED", f"image pull failed: {str(exc)[:300]}") from exc
+    await audit(db, actor.id, "service.image_pulled", "service", service.id, {"image": service.image}, request)
+    await db.commit()
+    return success({"image": service.image}, message="image ready")
+
+
 @router.get("/targets")
 async def list_targets(db: AsyncSession = Depends(get_db)):
     targets = (await db.execute(select(Target).options(selectinload(Target.service), selectinload(Target.team)).order_by(Target.public_port))).scalars().all()
@@ -396,6 +445,7 @@ async def initialize_targets(payload: TargetInitializeRequest, request: Request,
     services = list((await db.execute(service_query)).scalars())
     if not teams or not services:
         raise APIError(400, "INITIALIZATION_EMPTY", "no teams or services selected")
+    actor_id = actor.id
     initialized, skipped = [], []
     for team in teams:
         for service in services:
@@ -414,6 +464,7 @@ async def initialize_targets(payload: TargetInitializeRequest, request: Request,
             )
             db.add(target)
             await db.flush()
+            target_id = target.id
             try:
                 await request.app.state.target_adapter.initialize_target(target, service, team.team_no)
                 if payload.start:
@@ -422,12 +473,12 @@ async def initialize_targets(payload: TargetInitializeRequest, request: Request,
                     health = await request.app.state.target_adapter.check_health(target, service)
                     target.status = TargetStatus.RUNNING if health.ok else TargetStatus.UNHEALTHY
                     target.unhealthy_since = utcnow() if not health.ok else None
-                await audit(db, actor.id, "target.initialize", "target", target.id, {"container": target.container_name, "volume": target.volume_name}, request)
+                await audit(db, actor_id, "target.initialize", "target", target_id, {"container": target.container_name, "volume": target.volume_name}, request)
                 await db.commit()
-                initialized.append(target.id)
+                initialized.append(target_id)
             except Exception as exc:
                 await db.rollback()
-                await audit(db, actor.id, "target.initialize_failed", "target", target.id, {"error": str(exc)[:500]}, request)
+                await audit(db, actor_id, "target.initialize_failed", "target", target_id, {"error": str(exc)[:500]}, request)
                 await db.commit()
                 raise APIError(500, "TARGET_INITIALIZATION_FAILED", str(exc)[:300])
     return success({"initialized": initialized, "skipped": skipped}, message="target initialization complete")

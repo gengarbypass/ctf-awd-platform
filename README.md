@@ -9,7 +9,11 @@ git clone https://github.com/gengarbypass/ctf-awd-platform.git
 sudo bash ctf-awd-platform/deploy.sh
 ```
 
-脚本自动完成：Docker 安装、数据目录、密钥生成、前端构建、自签名证书、容器栈启动、数据库迁移与初始管理员创建。初始管理员密码在执行时打印并写入 `deploy/.env`，首次登录后请立即修改。
+脚本自动完成：Docker 安装、数据目录、密钥生成、前端镜像构建、自签名证书、容器栈启动、数据库迁移与初始管理员创建。初始管理员密码在执行时打印并写入 `deploy/.env`，首次登录后请立即修改。
+
+> 大陆 ECS 建议在部署时填写阿里云容器镜像服务提供的加速地址（或写入 `deploy/.env` 的 `DOCKER_REGISTRY_MIRROR`），否则 Docker Hub 拉取可能失败。脚本会自动配置 Docker、PyPI 和 npm 镜像参数。
+>
+> 首次登录后先进入「服务模板」创建服务模板并点「预检镜像」，再初始化靶机；平台不预置靶机镜像，挑战镜像需由管理员提前构建并可从服务器拉取。
 
 部署后请在阿里云安全组放行：TCP 443（平台）、TCP 80（跳转）、TCP 22（限管理员 IP）、实际使用的比赛端口段（默认队伍靶机 20000—21599）。
 

@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Activity, Bell, ChevronDown, ClipboardList, Flag, Gauge, LogOut, Menu, MonitorCog,
-  ScrollText, ShieldCheck, Swords, Trophy, Users, X,
+  ScrollText, ShieldCheck, Swords, Trophy, Users, X, Boxes,
 } from '@lucide/vue'
 import { isDemo } from '@/api/client'
 import { useAuthStore } from '@/stores/auth'
@@ -25,6 +25,7 @@ const playerNav = [
 const adminNav = [
   { to: '/admin', label: '运行总览', icon: Gauge },
   { to: '/admin/match', label: '比赛控制', icon: Flag },
+  { to: '/admin/services', label: '服务模板', icon: Boxes },
   { to: '/admin/teams', label: '队伍管理', icon: Users },
   { to: '/admin/users', label: '选手管理', icon: ShieldCheck },
   { to: '/admin/targets', label: '靶机管理', icon: MonitorCog },
@@ -72,7 +73,7 @@ onBeforeUnmount(() => { matchStore.stopClock(); window.removeEventListener('keyd
 
     <div class="workspace">
       <header class="topbar">
-        <div class="topbar__left"><button class="icon-button mobile-menu" type="button" aria-label="打开导航" @click="mobileOpen = true"><Menu :size="21" aria-hidden="true" /></button><div class="match-identity"><strong>{{ matchStore.match?.name || '正在读取比赛' }}</strong><span v-if="isDemo" class="demo-label">演示数据</span></div></div>
+        <div class="topbar__left"><button class="icon-button mobile-menu" type="button" aria-label="打开导航" @click="mobileOpen = true"><Menu :size="21" aria-hidden="true" /></button><div class="match-identity"><strong>{{ matchStore.match?.name || (matchStore.loading ? '正在读取比赛' : '暂无比赛') }}</strong><span v-if="isDemo" class="demo-label">演示数据</span></div></div>
         <div class="topbar__right">
           <div v-if="matchStore.match && matchMeta" class="match-clock"><StatusTag :label="matchMeta.label" :tone="matchMeta.tone" /><span class="num">{{ ['RUNNING', 'PAUSED'].includes(matchStore.match.status) ? formatDuration(matchStore.remainingSeconds) : '00:00:00' }}</span></div>
           <el-dropdown trigger="click">

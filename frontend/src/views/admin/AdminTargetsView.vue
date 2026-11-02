@@ -56,7 +56,7 @@ onMounted(load)
 
 <template>
   <PageHeader title="靶机管理" description="每队每种服务仅一个实例，初始化操作幂等且不会重置已有成绩。">
-    <template #actions><button class="button button--secondary" type="button" :disabled="loading" @click="load"><RefreshCw :size="16" aria-hidden="true" />刷新状态</button><button class="button button--primary" type="button" @click="initialize"><Boxes :size="16" aria-hidden="true" />初始化缺失靶机</button></template>
+    <template #actions><RouterLink class="button button--secondary" to="/admin/services">服务模板</RouterLink><button class="button button--secondary" type="button" :disabled="loading" @click="load"><RefreshCw :size="16" aria-hidden="true" />刷新状态</button><button class="button button--primary" type="button" @click="initialize"><Boxes :size="16" aria-hidden="true" />初始化缺失靶机</button></template>
   </PageHeader>
   <p v-if="actionError" class="inline-error" role="alert">{{ actionError }}</p><p v-if="actionMessage" class="inline-success" role="status">{{ actionMessage }}</p>
   <dl class="stat-row"><div><dt>靶机实例</dt><dd>{{ data.length }}</dd></div><div><dt>运行正常</dt><dd>{{ data.filter(item => item.status === 'RUNNING').length }}</dd></div><div><dt>恢复中</dt><dd>{{ data.filter(item => item.status === 'RESTARTING').length }}</dd></div><div><dt>异常或人工处理</dt><dd>{{ data.filter(item => ['UNHEALTHY', 'MANUAL_INTERVENTION'].includes(item.status)).length }}</dd></div></dl>

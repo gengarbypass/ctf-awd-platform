@@ -1,0 +1,27 @@
+# 构建上下文只保留构建所需内容，避免把依赖、数据库和密钥发送给 Docker daemon。
+.git
+.gitignore
+*.bundle
+*.db
+*.log
+
+# 依赖与构建缓存
+**/.venv
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/*.pyc
+frontend/dist
+**/*.tsbuildinfo
+
+# 本机配置和证书
+deploy/.env
+deploy/certs/
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# 非构建资料
+docs
+*.md

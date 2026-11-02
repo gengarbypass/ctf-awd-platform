@@ -1,8 +1,8 @@
 import { demo } from './demo'
 import type {
   AdminOverview, Announcement, AnnouncementPayload, ApiResponse, AuditLog, FlagResult,
-  LoginPayload, Match, RegisterPayload, Scoreboard, ScoreLedger, Submission, Target, Team,
-  TeamPayload, User, UserPayload, HealthCheck,
+  LoginPayload, Match, RegisterPayload, Scoreboard, ScoreLedger, Service, ServicePayload,
+  Submission, Target, Team, TeamPayload, User, UserPayload, HealthCheck,
 } from './types'
 
 export const isDemo = import.meta.env.DEV && import.meta.env.VITE_USE_DEMO !== 'false'
@@ -69,6 +69,11 @@ export const api = {
   updateMatch: (payload: Partial<Match>) => request<Match>('/admin/match', json('PUT', payload), () => demo.updateMatch(payload)),
   adminTargets: () => request<Target[]>('/admin/targets', {}, () => demo.targets()),
   initializeTargets: () => request<unknown>('/admin/targets', json('POST', {}), () => demo.initializeTargets()),
+  adminServices: () => request<Service[]>('/admin/services', {}, () => demo.services()),
+  createService: (payload: ServicePayload) => request<Service>('/admin/services', json('POST', payload), () => demo.createService(payload)),
+  updateService: (id: string, payload: Partial<ServicePayload>) => request<Service>(`/admin/services/${id}`, json('PUT', payload), () => demo.updateService(id, payload)),
+  deleteService: (id: string) => request<null>(`/admin/services/${id}`, json('DELETE'), () => demo.deleteService(id)),
+  pullServiceImage: (id: string) => request<{ image: string }>(`/admin/services/${id}/pull-image`, json('POST', {}), () => demo.pullServiceImage(id)),
   startTarget: (id: string) => request<Target>(`/admin/targets/${id}/start`, json('POST', {}), () => demo.changeTargetState(id, 'start')),
   stopTarget: (id: string) => request<Target>(`/admin/targets/${id}/stop`, json('POST', {}), () => demo.changeTargetState(id, 'stop')),
   healthRecords: (id: string) => request<HealthCheck[]>(`/admin/health?target_id=${encodeURIComponent(id)}`, {}, () => demo.healthRecords(id)),

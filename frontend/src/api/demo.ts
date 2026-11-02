@@ -1,6 +1,6 @@
 import type {
   AdminOverview, Announcement, AnnouncementPayload, AuditLog, FlagResult, LoginPayload,
-  Match, RegisterPayload, Scoreboard, ScoreLedger, Submission, Target, Team, TeamPayload,
+  Match, RegisterPayload, Scoreboard, ScoreLedger, Service, ServicePayload, Submission, Target, Team, TeamPayload,
   User, UserPayload,
 } from './types'
 
@@ -45,6 +45,19 @@ const serviceTemplates = [
   { code: 'api', name: 'API 服务', protocol: 'TCP', internal_port: 8080 },
   { code: 'db', name: '数据库题服务', protocol: 'TCP', internal_port: 3306 },
 ]
+
+const serviceCatalog: Service[] = serviceTemplates.map((service, index) => ({
+  id: `service-${index + 1}`,
+  code: service.code,
+  name: service.name,
+  service_no: index + 1,
+  protocol: service.protocol as 'TCP' | 'HTTP',
+  internal_port: service.internal_port,
+  public_base_port: 20000 + index + 1,
+  flag_path: '/data/flag',
+  image: 'nginx:stable-alpine',
+  check_config: service.protocol === 'HTTP' ? { path: '/', status: 200 } : {},
+}))
 
 const targets: Target[] = teams.flatMap((team, teamIndex) => serviceTemplates.map((service, serviceIndex) => ({
   id: `target-${team.team_no}-${serviceIndex + 1}`,
@@ -346,6 +359,39 @@ export const demo = {
     Object.assign(notice, payload); audit('ANNOUNCEMENT_UPDATE', 'announcement', id, payload.status === 'WITHDRAWN' ? '撤回公告' : '更新公告'); return clone(notice)
   },
   async auditLogs() { await wait(); requireAdmin(); return clone(auditLogs) },
+  async services() { await wait(); requireAdmin(); return clone(serviceCatalog) },
+  async createService(payload: ServicePayload) {
+    await wait(); requireAdmin()
+    if (serviceCatalog.some(item => item.code === payload.code || item.service_no === payload.service_no)) throw new Error('服务代码或编号已存在。')
+    const service: Service = { id: uid(), ...payload }
+    serviceCatalog.push(service)
+    audit('SERVICE_CREATE', 'service', service.id, `创建服务模板 ${service.name}`)
+    return clone(service)
+  },
+  async updateService(id: string, payload: Partial<ServicePayload>) {
+    await wait(); requireAdmin()
+    const service = serviceCatalog.find(item => item.id === id)
+    if (!service) throw new Error('未找到该服务模板。')
+    Object.assign(service, payload)
+    audit('SERVICE_UPDATE', 'service', id, `更新服务模板 ${service.name}`)
+    return clone(service)
+  },
+  async deleteService(id: string) {
+    await wait(); requireAdmin()
+    if (targets.some(item => item.service_id === id)) throw new Error('该服务已有靶机实例，不能删除。')
+    const index = serviceCatalog.findIndex(item => item.id === id)
+    if (index < 0) throw new Error('未找到该服务模板。')
+    const [service] = serviceCatalog.splice(index, 1)
+    audit('SERVICE_DELETE', 'service', id, `删除服务模板 ${service.name}`)
+    return null
+  },
+  async pullServiceImage(id: string) {
+    await wait(); requireAdmin()
+    const service = serviceCatalog.find(item => item.id === id)
+    if (!service) throw new Error('未找到该服务模板。')
+    audit('SERVICE_IMAGE_PULL', 'service', id, `预检镜像 ${service.image}`)
+    return { image: service.image }
+  },
   async exportScores() {
     await wait(); requireAdmin()
     const lines = ['队伍编号,队伍名称,当前总分,有效攻击,被攻击', ...teams.map(team => `${team.team_no},${team.name},${team.current_score},${team.attack_count},${team.breached_count}`)]
