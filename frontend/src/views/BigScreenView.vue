@@ -1089,4 +1089,46 @@ onBeforeUnmount(() => {
 .boot-overlay--error { color: #0b2a5b; }
 .boot-retry { border-color: rgba(31, 99, 214, 0.32); color: #1f63d6; background: rgba(255, 255, 255, 0.8); }
 .boot-retry:hover { border-color: #1f63d6; }
+
+/* Small module labels: +2px for projection readability */
+.brand-copy span,
+.match-code,
+.demo-chip,
+.status-pill,
+.live-chip,
+.eyebrow,
+.panel-side,
+.rank-arrow,
+.score-delta,
+.stat-card span,
+.radar-legend strong,
+.radar-legend em,
+.feed-count,
+.notice-count,
+.feed-copy small,
+.notice-feature p,
+.notice-list strong,
+.ticker-label,
+.ticker-track { font-size: 11px; }
+.clock-block span,
+.ranking-head,
+.team-name span,
+.team-sub,
+.radar-legend span,
+.feed-time,
+.notice-level,
+.notice-top time,
+.footer-sync { font-size: 10px; }
+.pin-mark,
+.stat-card small,
+.notice-list span { font-size: 9px; }
+.match-meta,
+.combat-cell,
+.feed-copy strong,
+.notice-empty,
+.error-strip,
+.boot-overlay p,
+.boot-retry { font-size: 12px; }
+.ranking-empty,
+.notice-feature h3 { font-size: 13px; }
 </style>
