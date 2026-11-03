@@ -72,6 +72,7 @@ export const api = {
   matchAction: (action: 'start' | 'pause' | 'resume' | 'finish', body: Record<string, never> = {}) => request<Match>(`/admin/match/${action}`, json('POST', body), () => demo.matchAction(action)),
   readyMatch: () => request<Match>('/admin/match/ready', json('POST', {}), () => demo.matchAction('ready')),
   createMatch: (payload: Pick<Match, 'name' | 'starts_at' | 'ends_at' | 'round_seconds' | 'grace_seconds'>) => request<Match>('/admin/matches', json('POST', payload), () => demo.createMatch(payload)),
+  resetMatchScores: () => request<{ teams: number }>('/admin/match/reset-scores', json('POST', {}), () => demo.resetMatchScores()),
   freezeMatch: (frozen: boolean) => request<Match>('/admin/match/freeze', json('POST', { frozen }), () => demo.matchAction('freeze')),
   updateMatch: (payload: Partial<Match>) => request<Match>('/admin/match', json('PUT', payload), () => demo.updateMatch(payload)),
   adminTargets: () => request<Target[]>('/admin/targets', {}, () => demo.targets()),

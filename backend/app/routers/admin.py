@@ -240,12 +240,45 @@ async def create_match(payload: MatchCreate, request: Request, actor: User = Dep
         raise APIError(409, "ACTIVE_MATCH_EXISTS", "finish the current match before creating another")
     if payload.ends_at <= payload.starts_at:
         raise APIError(400, "INVALID_TIME_RANGE", "ends_at must be later than starts_at")
+    previous_match_count = await db.scalar(select(func.count(Match.id))) or 0
     match = Match(**payload.model_dump())
     db.add(match)
     await db.flush()
+    reset_count = 0
+    if previous_match_count:
+        team_count = await db.scalar(select(func.count(Team.id))) or 0
+        await db.execute(update(Team).values(
+            current_score=settings.initial_team_score,
+            attack_count=0,
+            breached_count=0,
+            last_score_at=None,
+        ))
+        reset_count = team_count
+        await audit(db, actor.id, "match.scores_reset", "match", match.id, {"teams": reset_count, "reason": "new match"}, request)
     await audit(db, actor.id, "match.create", "match", match.id, payload.model_dump(mode="json"), request)
     await db.commit()
-    return success(match_dict(match))
+    if reset_count:
+        await request.app.state.events.publish("score.changed", {"match_id": match.id, "reason": "new_match"})
+    return success(match_dict(match), message=f"match created; {reset_count} team scores reset" if reset_count else "match created")
+
+
+@router.post("/match/reset-scores")
+async def reset_match_scores(request: Request, actor: User = Depends(_actor), db: AsyncSession = Depends(get_db)):
+    match = await _controllable_match(db)
+    if match.status not in {MatchStatus.DRAFT, MatchStatus.READY}:
+        raise APIError(409, "MATCH_ALREADY_STARTED", "scores can only be reset before the match starts")
+    team_count = await db.scalar(select(func.count(Team.id))) or 0
+    await db.execute(update(Team).values(
+        current_score=settings.initial_team_score,
+        attack_count=0,
+        breached_count=0,
+        last_score_at=None,
+    ))
+    reset_count = team_count
+    await audit(db, actor.id, "match.scores_reset", "match", match.id, {"teams": reset_count, "reason": "manual"}, request)
+    await db.commit()
+    await request.app.state.events.publish("score.changed", {"match_id": match.id, "reason": "manual_reset"})
+    return success({"teams": reset_count}, message=f"reset {reset_count} team scores")
 
 
 @router.put("/matches/{match_id}")

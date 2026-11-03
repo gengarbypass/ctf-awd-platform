@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessageBox } from 'element-plus'
-import { Flag, LockKeyhole, Pause, Play, Square } from '@lucide/vue'
+import { Flag, LockKeyhole, Pause, Play, RotateCcw, Square } from '@lucide/vue'
 import { api } from '@/api/client'
 import type { Match, MatchStatus } from '@/api/types'
 import { useAsyncData } from '@/composables/useAsyncData'
@@ -54,8 +54,23 @@ async function createMatch() {
   try {
     data.value = await api.createMatch({ name: createForm.name.trim(), starts_at: new Date(createForm.starts_at).toISOString(), ends_at: new Date(createForm.ends_at).toISOString(), round_seconds: 300, grace_seconds: 30 })
     showCreateNext.value = false
-    syncConfig(); actionMessage.value = '比赛已创建，请初始化靶机并完成赛前检查。'; await shellMatch.load()
+    syncConfig(); actionMessage.value = '比赛已创建；下一场比赛的队伍积分已自动重置，请初始化靶机并完成赛前检查。'; await shellMatch.load()
   } catch (cause) { actionError.value = cause instanceof Error ? cause.message : '创建比赛失败。' } finally { busy.value = '' }
+}
+async function resetScores() {
+  if (!data.value) return
+  try {
+    await ElMessageBox.confirm('将本场所有队伍的积分、有效攻击和被攻击次数重置为初始值？该操作只允许在比赛开始前执行。', '初始化本场分数', { type: 'warning', confirmButtonText: '确认初始化', cancelButtonText: '取消' })
+  } catch {
+    return
+  }
+  actionError.value = ''; actionMessage.value = ''
+  busy.value = 'scores'
+  try {
+    const result = await api.resetMatchScores()
+    actionMessage.value = `已将 ${result.teams} 支队伍的积分重置为初始值。`
+    await shellMatch.load()
+  } catch (cause) { actionError.value = cause instanceof Error ? cause.message : '初始化分数失败。' } finally { busy.value = '' }
 }
 onMounted(reload)
 </script>
@@ -65,7 +80,7 @@ onMounted(reload)
   <DataState :loading="loading" :loaded="loaded" :error="error" :empty="!data" empty-text="尚未创建比赛。先设置本场时间，再初始化队伍与靶机。" @retry="reload">
     <template #empty-action><form class="create-match-form" @submit.prevent="createMatch"><div class="form-field"><label for="create-match-name">比赛名称</label><input id="create-match-name" v-model="createForm.name" class="input" type="text" required /></div><div class="form-grid"><div class="form-field"><label for="create-match-start">开始时间</label><input id="create-match-start" v-model="createForm.starts_at" class="input" type="datetime-local" required /></div><div class="form-field"><label for="create-match-end">结束时间</label><input id="create-match-end" v-model="createForm.ends_at" class="input" type="datetime-local" required /></div></div><p class="field-help">默认每场 4 小时，Flag 每 300 秒轮换，上一周期宽限 30 秒。</p><button class="button button--primary" type="submit" :disabled="busy === 'create'">{{ busy === 'create' ? '创建中' : '创建比赛' }}</button></form></template>
     <template v-if="data">
-      <section class="match-control-panel"><div class="match-control-panel__summary"><StatusTag :label="matchStatus[data.status].label" :tone="matchStatus[data.status].tone" /><h2>{{ data.name }}</h2><dl><div><dt>开始时间</dt><dd>{{ formatFullDate(data.starts_at) }}</dd></div><div><dt>结束时间</dt><dd>{{ formatFullDate(data.ends_at) }}</dd></div><div><dt>当前轮次</dt><dd>第 {{ data.current_round }} 轮</dd></div></dl></div><div class="match-control-panel__actions"><button v-if="data.status === 'DRAFT'" class="button button--primary" type="button" :disabled="!!busy" @click="action('ready')"><Flag :size="16" aria-hidden="true" />完成赛前检查</button><button v-if="data.status === 'READY'" class="button button--primary" type="button" :disabled="!!busy" @click="action('start')"><Play :size="16" aria-hidden="true" />开始比赛</button><button v-if="data.status === 'RUNNING'" class="button button--primary" type="button" :disabled="!!busy" @click="action('pause')"><Pause :size="16" aria-hidden="true" />暂停比赛</button><button v-if="data.status === 'PAUSED'" class="button button--primary" type="button" :disabled="!!busy" @click="action('resume')"><Play :size="16" aria-hidden="true" />恢复比赛</button><button class="button button--secondary" type="button" :disabled="!!busy || !['RUNNING', 'PAUSED'].includes(data.status)" @click="freeze"><LockKeyhole :size="16" aria-hidden="true" />{{ data.score_frozen ? '解除冻结' : '冻结计分板' }}</button><button v-if="data.status === 'FINISHED'" class="button button--primary" type="button" :disabled="!!busy" @click="openNextMatch"><Flag :size="16" aria-hidden="true" />开启下一场</button><button class="button button--secondary danger-button" type="button" :disabled="!!busy || data.status === 'FINISHED'" @click="action('finish')"><Square :size="15" aria-hidden="true" />结束比赛</button></div></section>
+      <section class="match-control-panel"><div class="match-control-panel__summary"><StatusTag :label="matchStatus[data.status].label" :tone="matchStatus[data.status].tone" /><h2>{{ data.name }}</h2><dl><div><dt>开始时间</dt><dd>{{ formatFullDate(data.starts_at) }}</dd></div><div><dt>结束时间</dt><dd>{{ formatFullDate(data.ends_at) }}</dd></div><div><dt>当前轮次</dt><dd>第 {{ data.current_round }} 轮</dd></div></dl></div><div class="match-control-panel__actions"><button v-if="data.status === 'DRAFT'" class="button button--primary" type="button" :disabled="!!busy" @click="action('ready')"><Flag :size="16" aria-hidden="true" />完成赛前检查</button><button v-if="data.status === 'READY'" class="button button--primary" type="button" :disabled="!!busy" @click="action('start')"><Play :size="16" aria-hidden="true" />开始比赛</button><button v-if="data.status === 'RUNNING'" class="button button--primary" type="button" :disabled="!!busy" @click="action('pause')"><Pause :size="16" aria-hidden="true" />暂停比赛</button><button v-if="data.status === 'PAUSED'" class="button button--primary" type="button" :disabled="!!busy" @click="action('resume')"><Play :size="16" aria-hidden="true" />恢复比赛</button><button class="button button--secondary" type="button" :disabled="!!busy || !['RUNNING', 'PAUSED'].includes(data.status)" @click="freeze"><LockKeyhole :size="16" aria-hidden="true" />{{ data.score_frozen ? '解除冻结' : '冻结计分板' }}</button><button v-if="['DRAFT', 'READY'].includes(data.status)" class="button button--secondary" type="button" :disabled="!!busy" @click="resetScores"><RotateCcw :size="16" aria-hidden="true" />初始化本场分数</button><button v-if="data.status === 'FINISHED'" class="button button--primary" type="button" :disabled="!!busy" @click="openNextMatch"><Flag :size="16" aria-hidden="true" />开启下一场</button><button class="button button--secondary danger-button" type="button" :disabled="!!busy || data.status === 'FINISHED'" @click="action('finish')"><Square :size="15" aria-hidden="true" />结束比赛</button></div></section>
       <p v-if="actionError" class="inline-error" role="alert">{{ actionError }}</p><p v-if="actionMessage" class="inline-success" role="status">{{ actionMessage }}</p>
       <section v-if="data.status === 'FINISHED'" class="next-match-panel">
         <div class="next-match-panel__head">
@@ -76,7 +91,7 @@ onMounted(reload)
           <div class="form-field"><label for="next-match-name">比赛名称</label><input id="next-match-name" v-model="createForm.name" class="input" type="text" required /></div>
           <div class="form-grid"><div class="form-field"><label for="next-match-start">开始时间</label><input id="next-match-start" v-model="createForm.starts_at" class="input" type="datetime-local" required /></div><div class="form-field"><label for="next-match-end">结束时间</label><input id="next-match-end" v-model="createForm.ends_at" class="input" type="datetime-local" required /></div></div>
           <p class="field-help">默认每场 4 小时，Flag 每 300 秒轮换，上一周期宽限 30 秒。</p>
-          <p class="field-help">新比赛会沿用当前队伍、分数和靶机。需要从初始分重新开始时，请先到 <RouterLink to="/admin/teams">队伍管理</RouterLink> 逐队执行「初始化分数」；靶机数据按赛前流程处理。</p>
+          <p class="field-help">新比赛会自动将队伍积分、有效攻击和被攻击次数重置为初始值；靶机容器和数据沿用现有实例。需要重置靶机数据时按赛前流程处理。</p>
           <div class="dialog-actions"><button class="button button--secondary" type="button" @click="showCreateNext = false">取消</button><button class="button button--primary" type="submit" :disabled="busy === 'create'">{{ busy === 'create' ? '创建中' : '创建下一场' }}</button></div>
         </form>
       </section>

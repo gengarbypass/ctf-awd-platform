@@ -350,9 +350,27 @@ export const demo = {
   },
   async createMatch(payload: Pick<Match, 'name' | 'starts_at' | 'ends_at' | 'round_seconds' | 'grace_seconds'>) {
     await wait(); requireAdmin()
+    for (const team of teams) {
+      team.current_score = 1000
+      team.attack_count = 0
+      team.breached_count = 0
+      team.last_scored_at = null
+    }
     Object.assign(match, payload, { id: uid(), status: 'DRAFT', current_round: 0, score_frozen: false, frozen_at: null, paused_at: null, server_time: now() })
     audit('MATCH_CREATE', 'match', match.id, `创建比赛 ${match.name}`)
     return clone(match)
+  },
+  async resetMatchScores() {
+    await wait(); requireAdmin()
+    if (!['DRAFT', 'READY'].includes(match.status)) throw new Error('比赛开始后不能初始化分数。')
+    for (const team of teams) {
+      team.current_score = 1000
+      team.attack_count = 0
+      team.breached_count = 0
+      team.last_scored_at = null
+    }
+    audit('MATCH_SCORES_RESET', 'match', match.id, '初始化本场队伍分数')
+    return { teams: teams.length }
   },
   async updateMatch(payload: Partial<Match>) {
     await wait(); requireAdmin(); Object.assign(match, payload); syncMatchTime()

@@ -1,7 +1,9 @@
+from datetime import timedelta
+
 import pytest
 from sqlalchemy import func, select
 
-from app.models import AuditLog, Role, Service, Target, Team, User
+from app.models import AuditLog, MatchStatus, Role, Service, Target, Team, User, utcnow
 from app.security import hash_password
 from conftest import add_flag, make_game
 
@@ -83,6 +85,59 @@ async def test_player_sees_only_opponent_public_targets(client):
     assert "container_name" not in items[0]
     assert "gateway_host" not in items[0]
     assert own_target.id != items[0]["id"]
+
+
+@pytest.mark.asyncio
+async def test_next_match_resets_team_scores(client):
+    http, db = client
+    previous_match, _, teams, _ = await make_game(db)
+    previous_match.status = MatchStatus.FINISHED
+    teams[0].current_score = 1550
+    teams[0].attack_count = 7
+    teams[0].breached_count = 3
+    team_id = teams[0].id
+    db.add(User(username="admin", password_hash=hash_password("Admin123!"), role=Role.ADMIN))
+    await db.commit()
+    await login(http, "admin", "Admin123!")
+
+    start = utcnow() + timedelta(minutes=5)
+    response = await http.post("/api/v1/admin/matches", json={
+        "name": "Next Match",
+        "starts_at": start.isoformat(),
+        "ends_at": (start + timedelta(hours=2)).isoformat(),
+        "round_seconds": 300,
+        "grace_seconds": 30,
+    })
+    assert response.status_code == 200
+    assert response.json()["data"]["status"] == "DRAFT"
+    db.expire_all()
+    reset_team = await db.get(Team, team_id)
+    assert reset_team.current_score == 1000
+    assert reset_team.attack_count == 0
+    assert reset_team.breached_count == 0
+    reset_audit = (await db.execute(select(AuditLog).where(AuditLog.action == "match.scores_reset"))).scalar_one()
+    assert reset_audit.detail["reason"] == "new match"
+
+
+@pytest.mark.asyncio
+async def test_admin_can_reset_current_match_scores_before_start(client):
+    http, db = client
+    match, _, teams, _ = await make_game(db)
+    match.status = MatchStatus.DRAFT
+    teams[0].current_score = 1700
+    teams[0].attack_count = 9
+    team_id = teams[0].id
+    db.add(User(username="admin", password_hash=hash_password("Admin123!"), role=Role.ADMIN))
+    await db.commit()
+    await login(http, "admin", "Admin123!")
+
+    response = await http.post("/api/v1/admin/match/reset-scores", json={})
+    assert response.status_code == 200
+    assert response.json()["data"]["teams"] == 3
+    db.expire_all()
+    reset_team = await db.get(Team, team_id)
+    assert reset_team.current_score == 1000
+    assert reset_team.attack_count == 0
 
 
 @pytest.mark.asyncio
