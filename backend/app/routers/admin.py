@@ -1,3 +1,4 @@
+import asyncio
 import csv
 import io
 import json
@@ -526,9 +527,16 @@ async def initialize_targets(payload: TargetInitializeRequest, request: Request,
                 if payload.start:
                     target.status = TargetStatus.STARTING
                     await request.app.state.target_adapter.start(target)
-                    health = await request.app.state.target_adapter.check_health(target, service)
-                    target.status = TargetStatus.RUNNING if health.ok else TargetStatus.UNHEALTHY
-                    target.unhealthy_since = utcnow() if not health.ok else None
+                    health = None
+                    # PHP/Apache 等服务启动后需要短暂时间才能接受请求，初始化时给几次重试窗口。
+                    for attempt in range(4):
+                        health = await request.app.state.target_adapter.check_health(target, service)
+                        if health.ok:
+                            break
+                        if attempt < 3:
+                            await asyncio.sleep(1)
+                    target.status = TargetStatus.RUNNING if health and health.ok else TargetStatus.UNHEALTHY
+                    target.unhealthy_since = utcnow() if not (health and health.ok) else None
                 await audit(db, actor_id, "target.initialize", "target", target_id, {"container": target.container_name, "volume": target.volume_name}, request)
                 await db.commit()
                 initialized.append(target_id)

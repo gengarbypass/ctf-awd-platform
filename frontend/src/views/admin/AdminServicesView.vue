@@ -183,7 +183,7 @@ onMounted(load)
       <div class="form-field"><label for="service-name">服务名称</label><input id="service-name" v-model="form.name" class="input" type="text" maxlength="100" required /></div>
       <div class="form-grid">
         <div class="form-field"><label for="service-protocol">健康检查协议</label><select id="service-protocol" v-model="form.protocol" class="input"><option value="TCP">TCP</option><option value="HTTP">HTTP</option></select></div>
-        <div class="form-field"><label for="service-internal-port">容器内部端口</label><input id="service-internal-port" v-model.number="form.internal_port" class="input" type="number" min="1" max="65535" required /></div>
+        <div class="form-field"><label for="service-internal-port">容器内部端口</label><input id="service-internal-port" v-model.number="form.internal_port" class="input" type="number" min="1" max="65535" required /><p class="field-help">填容器内实际监听端口，例如 80；不要填 docker run 输出的宿主机映射端口（如 8101）。</p></div>
       </div>
       <div class="form-grid">
         <div class="form-field"><label for="service-public-port">公网基准端口</label><input id="service-public-port" v-model.number="form.public_base_port" class="input" type="number" min="1" max="65535" required /><p class="field-help">仅记录用；实际公网端口按“20000 + 队伍编号 × 100 + 服务编号”计算。</p></div>
